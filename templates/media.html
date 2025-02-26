@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="{{ url_for('static', filename='helper.js') }}"></script>
+    {% if idx > 0 %}
+    <script>
+      window.previous_media = "{{ url_for('show_media', idx=idx-1) }}";
+    </script>
+    {% endif %}
+    {% if idx + 1 < total %}
+    <script>
+      window.next_media = "{{ url_for('show_media', idx=idx+1) }}";
+    </script>
+    {% endif %}
+</head>
+<body>
+    <h2>{{ filename }}</h2>
+    {% if media_type == 'mp4' %}
+    <video width="1280" height="720" controls autoplay> 
+        <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
+    </video>
+    {% endif %}
+    {% if media_type == 'jpg' %}
+    <img src="{{ url_for('send_media', idx=idx) }}" /> 
+    {% endif %}
+    <br/>
+    {% if idx > 0 %}
+        <a href="{{ url_for('show_media', idx=idx-1) }}">Prev</a>
+    {% endif %}
+    {% if idx + 1 < total %}
+        <a href="{{ url_for('show_media', idx=idx+1) }}">Next</a>
+    {% endif %}
+    &nbsp;&nbsp;<a href="{{ url_for('show_media', idx='random') }}">Random</a>
+    <p/>
+    <a href="{{ url_for('list_media') }}#{{ idx }}">Back to list</a>
+</body>
+</html>

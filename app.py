@@ -17,6 +17,7 @@ app.config['SECRET_KEY'] = 'my_secret_key'  # Replace with your own secret key
 
 load_dotenv()
 root_dir = os.getenv("ROOT_DIR")
+extension = os.getenv("EXT")
 
 socketio = SocketIO(app)
 
@@ -24,34 +25,36 @@ socketio = SocketIO(app)
 def index():
     return render_template('index.html')
 
-@app.route('/list_videos')
-def list_videos():
+@app.route('/list_media')
+def list_media():
+    print("=====HERE" + root_dir)
     if 'cached_filenames' not in session:
         root_len = len(root_dir)
-        videos = []
-        for filename in glob.iglob(root_dir + '**/*.mp4', recursive=True):
+        media = []
+        for filename in glob.iglob(root_dir + '**/*.' + extension, recursive=True):
+            print("=====" + filename)
             if not Path(filename).is_symlink():
                 path_from_root = filename[root_len:]
-                videos.append(path_from_root)
-        videos.sort()
-        session['cached_filenames'] = videos
+                media.append(path_from_root)
+        media.sort()
+        session['cached_filenames'] = media
     cached_filenames = session['cached_filenames']
-    return render_template('list.html', videos=cached_filenames, total=len(cached_filenames))
+    return render_template('list.html', media=cached_filenames, total=len(cached_filenames))
 
-@app.route('/show_video')
-def show_video():
+@app.route('/show_media')
+def show_media():
     cached_filenames = session['cached_filenames'] if 'cached_filenames' in session else None
     total = len(cached_filenames) if cached_filenames is not None else 1
     idx_str = request.args.get('idx')
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
     if cached_filenames is not None and idx >= 0 and idx < total:
         filename = cached_filenames[idx]
-        return render_template('video.html', filename=filename, idx=idx, total=total)
+        return render_template('media.html', filename=filename, media_type=extension, idx=idx, total=total)
     else:
         return("<h1>Exception: Out of bounds</h1>")
 
-@app.route('/send_video')
-def send_video():
+@app.route('/send_media')
+def send_media():
   try:
     idx = request.args.get('idx')
     file_path = root_dir + session['cached_filenames'][int(idx)]

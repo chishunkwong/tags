@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Videos List LA</title>
+    <title>Media List</title>
 </head>
 <body>
-    <h1>Available videos:</h1>
+    <h1>Media List:</h1>
     <ul>
         {% for idx in range(0, total) %} 
         <li>
-            <a id="{{ idx }}" href="{{ url_for('show_video', idx=idx) }}">{{ videos[idx] }}</a>
+            <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}">{{ media[idx] }}</a>
         </li>
         {% endfor %}
     </ul>
