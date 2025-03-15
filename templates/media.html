@@ -19,8 +19,9 @@
     <video width="1280" height="720" controls autoplay> 
         <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
     </video>
-    {% endif %}
-    {% if media_type == 'jpg' %}
+    {% elif media_type == 'mp3' or media_type == 'ogg' %}
+    <audio controls autoplay src="{{ url_for('send_media', idx=idx) }}"></audio>
+    {% elif media_type == 'jpg' %}
     <img src="{{ url_for('send_media', idx=idx) }}" /> 
     {% endif %}
     <br/>

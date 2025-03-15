@@ -3,20 +3,27 @@ import os
 from pathlib import Path
 from random import randint
 from flask import Flask, send_file, render_template, request, session
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 from flask_session import Session
 from dotenv import load_dotenv
+from models.asset import Asset
+from models.base import Base
 
-
-app = Flask(__name__)
-SESSION_TYPE = 'filesystem'
-app.config.from_object(__name__)
-Session(app)
-# What is this?
-app.config['SECRET_KEY'] = 'my_secret_key'  # Replace with your own secret key
 
 load_dotenv()
+
+app = Flask(__name__)
+if os.getenv("ENV") == 'Dev':
+    app.config.from_object('config.DevelopmentConfig')
+Session(app)
+db = SQLAlchemy(app, model_class=Base)
+migrate = Migrate(app, db)
+
 root_dir = os.getenv("ROOT_DIR")
+if root_dir[-1] != '/':
+    root_dir = root_dir + '/'
 extension = os.getenv("EXT")
 
 socketio = SocketIO(app)
@@ -27,12 +34,10 @@ def index():
 
 @app.route('/list_media')
 def list_media():
-    print("=====HERE" + root_dir)
     if 'cached_filenames' not in session:
         root_len = len(root_dir)
         media = []
         for filename in glob.iglob(root_dir + '**/*.' + extension, recursive=True):
-            print("=====" + filename)
             if not Path(filename).is_symlink():
                 path_from_root = filename[root_len:]
                 media.append(path_from_root)
@@ -58,7 +63,6 @@ def send_media():
   try:
     idx = request.args.get('idx')
     file_path = root_dir + session['cached_filenames'][int(idx)]
-    print('Fetching ' + file_path)
     return send_file(file_path)
   except BaseException as e:
     print (e)
