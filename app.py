@@ -54,9 +54,16 @@ def show_media():
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
     if cached_filenames is not None and idx >= 0 and idx < total:
         filename = cached_filenames[idx]
+        ensure_media_in_db(root_dir + filename)
         return render_template('media.html', filename=filename, media_type=extension, idx=idx, total=total)
     else:
         return("<h1>Exception: Out of bounds</h1>")
+
+def ensure_media_in_db(path):
+    asset = db.session.execute(db.select(Asset).filter_by(path=path)).one_or_none()
+    if not asset:
+        db.session.add(Asset(path=path))
+        db.session.commit()
 
 @app.route('/send_media')
 def send_media():
