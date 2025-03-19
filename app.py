@@ -9,6 +9,8 @@ from flask_socketio import SocketIO
 from flask_session import Session
 from dotenv import load_dotenv
 from models.asset import Asset
+from models.tag import Tag
+from models.tag_group import TagGroup
 from models.base import Base
 
 
