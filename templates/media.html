@@ -16,7 +16,7 @@
 <body>
     <h2>{{ filename }}</h2>
     {% if media_type == 'mp4' %}
-    <video width="1280" height="720" controls autoplay> 
+    <video width="854" height="480" controls autoplay> 
         <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
     </video>
     {% elif media_type == 'mp3' or media_type == 'ogg' %}

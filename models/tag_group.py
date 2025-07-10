@@ -5,5 +5,8 @@ class TagGroup(Base):
     __tablename__ = "tag_group"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+    ui_addable: Mapped[bool]
+    multiselect: Mapped[bool]
+    show_all: Mapped[bool]
 
     tags = relationship("Tag", back_populates="tag_group")
