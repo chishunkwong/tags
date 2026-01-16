@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from models.asset import Asset
 from models.tag import Tag
 from models.tag_group import TagGroup
+from models.category_tag_group import CategoryTagGroup
 from models.base import Base
 
 
@@ -27,6 +28,8 @@ root_dir = os.getenv("ROOT_DIR")
 if root_dir[-1] != '/':
     root_dir = root_dir + '/'
 extension = os.getenv("EXT")
+
+category = os.getenv("CATEGORY")
 
 socketio = SocketIO(app)
 
@@ -56,16 +59,32 @@ def show_media():
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
     if cached_filenames is not None and idx >= 0 and idx < total:
         filename = cached_filenames[idx]
-        ensure_media_in_db(root_dir + filename)
-        return render_template('media.html', filename=filename, media_type=extension, idx=idx, total=total)
+        asset = ensure_media_in_db(root_dir + filename)
+        return render_template('media.html',
+                               filename=filename,
+                               media_type=extension,
+                               db_id=asset.id,
+                               favorite=asset.favorite,
+                               idx=idx,
+                               total=total)
     else:
         return("<h1>Exception: Out of bounds</h1>")
 
 def ensure_media_in_db(path):
-    asset = db.session.execute(db.select(Asset).filter_by(path=path)).one_or_none()
+    asset = db.session.scalars(db.select(Asset).filter_by(path=path)).one_or_none()
     if not asset:
-        db.session.add(Asset(path=path))
+        asset = Asset(path=path)
+        db.session.add(asset)
         db.session.commit()
+        asset = db.session.scalars(db.select(Asset).filter_by(path=path)).one_or_none()
+    return asset
+
+def load_tag_groups():
+    tag_groups = db.session.execute(db.select(CategoryTagGroup)
+                                    .filter_by(name=category)
+                                    .order_by(CategoryTagGroup.display_order)
+                                    ).scalars().all()
+    return tag_groups
 
 @app.route('/send_media')
 def send_media():
@@ -77,6 +96,10 @@ def send_media():
     print (e)
     return("<h1>Exception: Download operation failed</h1>")
 
+@app.route('/handle_save')
+def handle_save():
+    pass
+
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
@@ -85,6 +108,19 @@ def handle_connect():
 def handle_message(data):
     print('Received message:', data)
     socketio.emit('response', 'Server received your message: ' + data)
+
+@socketio.on('set_favorite')
+def handle_set_favorite(data):
+    print('Received set_favorite:', data, type(data))
+    db_id = data['db_id']
+    asset = db.session.get(Asset, db_id)
+    if asset is None:
+        return
+    favorite = data['favorite']
+    asset.favorite = favorite
+    print('Setting favorite for ', asset.path, asset.id)
+    db.session.commit()
+    socketio.emit('set_favorite', 'true' if asset.favorite else 'false')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

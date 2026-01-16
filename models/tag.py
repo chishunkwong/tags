@@ -1,5 +1,4 @@
 from .base import Base
-from .tag_group import TagGroup
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
 
