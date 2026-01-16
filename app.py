@@ -2,7 +2,7 @@ import glob
 import os
 from pathlib import Path
 from random import randint
-from flask import Flask, send_file, render_template, request, session
+from flask import Flask, send_file, render_template, request, session, redirect, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
@@ -51,6 +51,11 @@ def list_media():
     cached_filenames = session['cached_filenames']
     return render_template('list.html', media=cached_filenames, total=len(cached_filenames))
 
+@app.route('/refresh_media_list', methods=['GET', 'POST'])
+def refresh_media_list():
+    session.pop('cached_filenames', None)
+    return redirect(url_for('list_media'))
+
 @app.route('/show_media')
 def show_media():
     cached_filenames = session['cached_filenames'] if 'cached_filenames' in session else None
@@ -59,9 +64,12 @@ def show_media():
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
     if cached_filenames is not None and idx >= 0 and idx < total:
         filename = cached_filenames[idx]
-        asset = ensure_media_in_db(root_dir + filename)
+        filepath = root_dir + filename
+        filesize = int(os.path.getsize(filepath) / (1024 * 1024))
+        asset = ensure_media_in_db(filepath)
         return render_template('media.html',
                                filename=filename,
+                               filesize=filesize,
                                media_type=extension,
                                db_id=asset.id,
                                favorite=asset.favorite,

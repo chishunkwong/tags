@@ -39,7 +39,7 @@
     {% endif %}
 </head>
 <body>
-    <h2>{{ filename }}</h2>
+    <h2>{{ filename }} ({{ filesize }} MB)</h2>
     <div class="box">
         <div>
             {% if media_type == 'mp4' %}
@@ -74,9 +74,11 @@
                 <input type="submit" value="Submit">
             </form>
             -->
-            <input type="checkbox" id="favorite"
-            {% if favorite %} checked {% endif %}
-            onclick="handleFavorite(this)">Favorite</input>
+            <label>
+                <input type="checkbox" id="favorite"
+                {% if favorite %} checked {% endif %}
+                onclick="handleFavorite(this)">Favorite</input>
+            </label>
         </div>
     </div>
 </body>
