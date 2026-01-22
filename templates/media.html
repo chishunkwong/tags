@@ -23,8 +23,11 @@
         });
 
         function handleFavorite(checkbox) {
-            console.log('Sending favorite for db_id=' + dbId);
             socket.emit('set_favorite', { db_id: dbId, favorite: checkbox.checked });
+        }
+
+        function handleBookmark(checkbox) {
+            socket.emit('set_bookmark', { db_id: dbId, bookmark: checkbox.checked });
         }
     </script>
     {% if idx > 0 %}
@@ -78,6 +81,12 @@
                 <input type="checkbox" id="favorite"
                 {% if favorite %} checked {% endif %}
                 onclick="handleFavorite(this)">Favorite</input>
+            </label>
+            <p/>
+            <label>
+                <input type="checkbox" id="bookmark"
+                {% if bookmark %} checked {% endif %}
+                onclick="handleBookmark(this)">Bookmark</input>
             </label>
         </div>
     </div>

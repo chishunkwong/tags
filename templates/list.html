@@ -9,7 +9,7 @@
     <ul>
         {% for idx in range(0, total) %} 
         <li>
-            <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}">{{ media[idx] }}</a>
+            <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}">{{ media[idx]['path'] }}</a> {% if media[idx]['bookmarked'] %} bookmarked {% endif %}
         </li>
         {% endfor %}
     </ul>

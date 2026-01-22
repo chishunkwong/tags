@@ -41,15 +41,24 @@ def index():
 def list_media():
     if 'cached_filenames' not in session:
         root_len = len(root_dir)
-        media = []
+        media_arr = []
         for filename in glob.iglob(root_dir + '**/*.' + extension, recursive=True):
             if not Path(filename).is_symlink():
-                path_from_root = filename[root_len:]
-                media.append(path_from_root)
-        media.sort()
-        session['cached_filenames'] = media
+                rel_path = filename[root_len:]
+                media_arr.append(rel_path)
+        media_arr.sort()
+        session['cached_filenames'] = media_arr
     cached_filenames = session['cached_filenames']
-    return render_template('list.html', media=cached_filenames, total=len(cached_filenames))
+    media = {}
+    bookmarks = load_bookmarks()
+    for idx, path in enumerate(cached_filenames):
+        media[idx] = {
+            'path': path,
+            'bookmarked': (root_dir + path) in bookmarks
+        }
+    return render_template('list.html',
+                           media=media,
+                           total=len(cached_filenames))
 
 @app.route('/refresh_media_list', methods=['GET', 'POST'])
 def refresh_media_list():
@@ -73,6 +82,7 @@ def show_media():
                                media_type=extension,
                                db_id=asset.id,
                                favorite=asset.favorite,
+                               bookmark=asset.bookmark,
                                idx=idx,
                                total=total)
     else:
@@ -93,6 +103,13 @@ def load_tag_groups():
                                     .order_by(CategoryTagGroup.display_order)
                                     ).scalars().all()
     return tag_groups
+
+# Return a set of bookmarks
+def load_bookmarks():
+    bookmarked = db.session.execute(db.select(Asset)
+                                    .filter_by(bookmark=True)
+                                    ).scalars().all()
+    return {asset.path for asset in bookmarked}
 
 @app.route('/send_media')
 def send_media():
@@ -119,16 +136,22 @@ def handle_message(data):
 
 @socketio.on('set_favorite')
 def handle_set_favorite(data):
-    print('Received set_favorite:', data, type(data))
     db_id = data['db_id']
     asset = db.session.get(Asset, db_id)
     if asset is None:
         return
-    favorite = data['favorite']
-    asset.favorite = favorite
-    print('Setting favorite for ', asset.path, asset.id)
+    asset.favorite = data['favorite']
     db.session.commit()
     socketio.emit('set_favorite', 'true' if asset.favorite else 'false')
+
+@socketio.on('set_bookmark')
+def handle_set_bookmark(data):
+    db_id = data['db_id']
+    asset = db.session.get(Asset, db_id)
+    if asset is None:
+        return
+    asset.bookmark = data['bookmark']
+    db.session.commit()
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
