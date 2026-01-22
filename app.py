@@ -83,6 +83,7 @@ def show_media():
                                db_id=asset.id,
                                favorite=asset.favorite,
                                bookmark=asset.bookmark,
+                               should_delete=asset.should_delete,
                                idx=idx,
                                total=total)
     else:
@@ -134,24 +135,23 @@ def handle_message(data):
     print('Received message:', data)
     socketio.emit('response', 'Server received your message: ' + data)
 
-@socketio.on('set_favorite')
-def handle_set_favorite(data):
+@socketio.on('set_asset_boolean')
+def handle_asset_set_boolean(data):
     db_id = data['db_id']
     asset = db.session.get(Asset, db_id)
     if asset is None:
         return
-    asset.favorite = data['favorite']
+    attribute = data['attribute']
+    setattr(asset, attribute, data['value'])
     db.session.commit()
-    socketio.emit('set_favorite', 'true' if asset.favorite else 'false')
-
-@socketio.on('set_bookmark')
-def handle_set_bookmark(data):
-    db_id = data['db_id']
-    asset = db.session.get(Asset, db_id)
-    if asset is None:
-        return
-    asset.bookmark = data['bookmark']
-    db.session.commit()
+    # TODO: business logic!
+    broadcast = attribute == 'favorite'
+    if broadcast:
+        socketio.emit('set_asset_' + db_id + '_attribute',
+                      {
+                          'attribute': attribute,
+                          'value': getattr(asset, attribute) == True
+                      })
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

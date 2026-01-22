@@ -17,17 +17,13 @@
             console.log('Server says: ' + data);
         });
 
-        socket.on('set_favorite', function (data) {
+        socket.on('set_asset_' + dbId + '_attribute', function (data) {
             console.log('Server says: ' + data);
-            document.getElementById("favorite").checked = 'true' == data;
+            document.getElementById(data['attribute']).checked = data['value'];
         });
 
-        function handleFavorite(checkbox) {
-            socket.emit('set_favorite', { db_id: dbId, favorite: checkbox.checked });
-        }
-
-        function handleBookmark(checkbox) {
-            socket.emit('set_bookmark', { db_id: dbId, bookmark: checkbox.checked });
+        function handleSetAssetBoolean(checkbox, attribute) {
+            socket.emit('set_asset_boolean', { db_id: dbId, attribute, value: checkbox.checked });
         }
     </script>
     {% if idx > 0 %}
@@ -77,17 +73,27 @@
                 <input type="submit" value="Submit">
             </form>
             -->
-            <label>
-                <input type="checkbox" id="favorite"
-                {% if favorite %} checked {% endif %}
-                onclick="handleFavorite(this)">Favorite</input>
-            </label>
+            <div>
+                <label>
+                    <input type="checkbox" id="favorite"
+                    {% if favorite %} checked {% endif %}
+                    onclick="handleSetAssetBoolean(this, 'favorite')">Favorite</input>
+                </label>
+                <br/>
+                <label>
+                    <input type="checkbox" id="bookmark"
+                    {% if bookmark %} checked {% endif %}
+                    onclick="handleSetAssetBoolean(this, 'bookmark')">Bookmark</input>
+                </label>
+                <br/>
+                <label>
+                    <input type="checkbox" id="should_delete"
+                    {% if should_delete %} checked {% endif %}
+                    onclick="handleSetAssetBoolean(this, 'should_delete')">Should delete</input>
+                </label>
+            </div>
             <p/>
-            <label>
-                <input type="checkbox" id="bookmark"
-                {% if bookmark %} checked {% endif %}
-                onclick="handleBookmark(this)">Bookmark</input>
-            </label>
+            <div>MoMo</div>
         </div>
     </div>
 </body>
