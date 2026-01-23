@@ -104,29 +104,24 @@
             </div>
             <p/>
             <div>
-                {% for tg in tag_groups %}
-                    {% if tg.multiselect %}
-                        <h4>{{ tg.name }}</h4>
-                        {% for tag in tg.tags %}
+            {% for tg in tag_groups %}
+                <fieldset>
+                    <legend><h4>{{ tg.name }}</h4></legend>
+                    {% for tag in tg.tags %}
+                        {% if not tg.multiselect or tg.show_size <= 2 %}<div>{% endif %}
                         <label>
+                        {% if tg.multiselect %}
                             <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
                             onclick="handleTagClicked(this, true)">{{ tag.name }}</input>
+                        {% else %}
+                            <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
+                            onclick="handleTagClicked(this, false)">{{ tag.name }}</input>
+                        {% endif %}
                         </label>
-                        {% endfor %}
-                    {% else %}
-                        <fieldset>
-                          <legend><h4>{{ tg.name }}</h4></legend>
-                              {% for tag in tg.tags %}
-                              <div>
-                                <label>
-                                    <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
-                                    onclick="handleTagClicked(this, false)">{{ tag.name }}</input>
-                                </label>
-                              </div>
-                              {% endfor %}
-                        </fieldset>
-                    {% endif %}
-                {% endfor %}
+                        {% if not tg.multiselect or tg.show_size <= 2 %}</div>{% endif %}
+                    {% endfor %}
+                </fieldset>
+            {% endfor %}
             </div>
         </div>
     </div>

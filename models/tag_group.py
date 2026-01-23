@@ -7,6 +7,6 @@ class TagGroup(Base):
     name: Mapped[str]
     ui_addable: Mapped[bool]
     multiselect: Mapped[bool]
-    show_all: Mapped[bool]
+    show_size: Mapped[int]
 
     tags = relationship("Tag", order_by='Tag.name', back_populates="tag_group")
