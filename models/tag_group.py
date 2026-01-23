@@ -9,4 +9,4 @@ class TagGroup(Base):
     multiselect: Mapped[bool]
     show_all: Mapped[bool]
 
-    tags = relationship("Tag", back_populates="tag_group")
+    tags = relationship("Tag", order_by='Tag.name', back_populates="tag_group")

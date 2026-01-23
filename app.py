@@ -1,5 +1,6 @@
 import glob
 import os
+import json
 from pathlib import Path
 from random import randint
 from flask import Flask, send_file, render_template, request, session, redirect, url_for
@@ -13,6 +14,7 @@ from models.tag import Tag
 from models.tag_group import TagGroup
 from models.category_tag_group import CategoryTagGroup
 from models.base import Base
+from sqlalchemy.orm import joinedload
 
 
 load_dotenv()
@@ -39,6 +41,9 @@ def index():
 
 @app.route('/list_media')
 def list_media():
+    if 'tag_groups' not in session:
+        tag_groups = load_tag_groups()
+        session['tag_groups'] = tag_groups
     if 'cached_filenames' not in session:
         root_len = len(root_dir)
         media_arr = []
@@ -63,10 +68,12 @@ def list_media():
 @app.route('/refresh_media_list', methods=['GET', 'POST'])
 def refresh_media_list():
     session.pop('cached_filenames', None)
+    session.pop('tag_groups', None)
     return redirect(url_for('list_media'))
 
 @app.route('/show_media')
 def show_media():
+    tag_groups = session['tag_groups'] if 'tag_groups' in session else []
     cached_filenames = session['cached_filenames'] if 'cached_filenames' in session else None
     total = len(cached_filenames) if cached_filenames is not None else 1
     idx_str = request.args.get('idx')
@@ -84,6 +91,7 @@ def show_media():
                                favorite=asset.favorite,
                                bookmark=asset.bookmark,
                                should_delete=asset.should_delete,
+                               tag_groups=tag_groups,
                                idx=idx,
                                total=total)
     else:
@@ -99,11 +107,17 @@ def ensure_media_in_db(path):
     return asset
 
 def load_tag_groups():
-    tag_groups = db.session.execute(db.select(CategoryTagGroup)
+    category_tag_groups = db.session.execute(db.select(CategoryTagGroup)
                                     .filter_by(name=category)
                                     .order_by(CategoryTagGroup.display_order)
                                     ).scalars().all()
-    return tag_groups
+    return [load_one_tag_group(ctg.tag_group_id) for ctg in category_tag_groups]
+
+def load_one_tag_group(id):
+    return db.session.scalars(db.select(TagGroup)
+                              .options(joinedload(TagGroup.tags))
+                              .filter_by(id=id)
+                              ).unique().one()
 
 # Return a set of bookmarks
 def load_bookmarks():
@@ -136,7 +150,7 @@ def handle_message(data):
     socketio.emit('response', 'Server received your message: ' + data)
 
 @socketio.on('set_asset_boolean')
-def handle_asset_set_boolean(data):
+def handle_set_asset_boolean(data):
     db_id = data['db_id']
     asset = db.session.get(Asset, db_id)
     if asset is None:
@@ -152,6 +166,11 @@ def handle_asset_set_boolean(data):
                           'attribute': attribute,
                           'value': getattr(asset, attribute) == True
                       })
+
+@socketio.on('set_tag')
+def handle_set_tag(data):
+    print("We heard you", json.dumps(data, indent=4))
+    pass
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

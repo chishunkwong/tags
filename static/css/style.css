@@ -8,3 +8,11 @@
   border: 2px dotted rgb(96 139 168);
   display: flex;
 }
+
+.scroll-box {
+  border: 1px solid black; /* Adds a border for visibility */
+  width: 300px;             /* Sets the width of the box */
+  height: 150px;            /* Sets the height of the box */
+  overflow: auto;           /* Adds scrollbars if content overflows */
+  padding: 10px;            /* Adds some space inside the box */
+}

@@ -25,6 +25,16 @@
         function handleSetAssetBoolean(checkbox, attribute) {
             socket.emit('set_asset_boolean', { db_id: dbId, attribute, value: checkbox.checked });
         }
+
+        function handleTagClicked(checkbox, isMultiselect) {
+            socket.emit('set_tag', {
+                db_id: dbId,
+                tag_id: checkbox.id,
+                value: checkbox.checked,
+                tag_group_id: checkbox.name,
+                is_multiselect: isMultiselect
+            });
+        }
     </script>
     {% if idx > 0 %}
     <script>
@@ -93,7 +103,31 @@
                 </label>
             </div>
             <p/>
-            <div>MoMo</div>
+            <div>
+                {% for tg in tag_groups %}
+                    {% if tg.multiselect %}
+                        <h4>{{ tg.name }}</h4>
+                        {% for tag in tg.tags %}
+                        <label>
+                            <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
+                            onclick="handleTagClicked(this, true)">{{ tag.name }}</input>
+                        </label>
+                        {% endfor %}
+                    {% else %}
+                        <fieldset>
+                          <legend><h4>{{ tg.name }}</h4></legend>
+                              {% for tag in tg.tags %}
+                              <div>
+                                <label>
+                                    <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
+                                    onclick="handleTagClicked(this, false)">{{ tag.name }}</input>
+                                </label>
+                              </div>
+                              {% endfor %}
+                        </fieldset>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </body>
