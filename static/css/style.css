@@ -9,10 +9,39 @@
   display: flex;
 }
 
+input[type="checkbox"], .inline-label {
+    display: inline-block;
+    vertical-align: middle; /* Aligns them vertically */
+}
+
 .scroll-box {
   border: 1px solid black; /* Adds a border for visibility */
   width: 300px;             /* Sets the width of the box */
   height: 150px;            /* Sets the height of the box */
   overflow: auto;           /* Adds scrollbars if content overflows */
   padding: 10px;            /* Adds some space inside the box */
+}
+
+.scroll-box-0 {
+  height: 20px;
+}
+
+.scroll-box-1 {
+  height: 20px;
+}
+
+.scroll-box-2 {
+  height: 40px;
+}
+
+.scroll-box-3 {
+  height: 60px;
+}
+
+.scroll-box-4 {
+  height: 80px;
+}
+
+.scroll-box-5 {
+  height: 100px;
 }

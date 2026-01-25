@@ -106,20 +106,23 @@
             <div>
             {% for tg in tag_groups %}
                 <fieldset>
-                    <legend><h4>{{ tg.name }}</h4></legend>
+                    <legend><b>{{ tg.name }}</b></legend>
+                    <div class="scroll-box scroll-box-{{ tg.show_size }}">
                     {% for tag in tg.tags %}
-                        {% if not tg.multiselect or tg.show_size <= 2 %}<div>{% endif %}
-                        <label>
+                        {% if not tg.multiselect or tg.show_size <= 0 %}<div>{% endif %}
+                        <label for="{{ tag.id }}" class="inline-label">
                         {% if tg.multiselect %}
                             <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
-                            onclick="handleTagClicked(this, true)">{{ tag.name }}</input>
+                            onclick="handleTagClicked(this, true)" />
                         {% else %}
                             <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
-                            onclick="handleTagClicked(this, false)">{{ tag.name }}</input>
+                            onclick="handleTagClicked(this, false)" />
                         {% endif %}
+                            {{ tag.name }}
                         </label>
-                        {% if not tg.multiselect or tg.show_size <= 2 %}</div>{% endif %}
+                        {% if not tg.multiselect or tg.show_size <= 0 %}</div>{% endif %}
                     {% endfor %}
+                    </div>
                 </fieldset>
             {% endfor %}
             </div>
