@@ -102,9 +102,11 @@
                         <label for="{{ tag.id }}" class="inline-label">
                         {% if tg.multiselect %}
                             <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
+                            {% if tag.id in tag_ids %}checked{% endif %}
                             onclick="handleTagClicked(this, true)" />
                         {% else %}
                             <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
+                            {% if tag.id in tag_ids %}checked{% endif %}
                             onclick="handleTagClicked(this, false)" />
                         {% endif %}
                             {{ tag.name }}
@@ -115,7 +117,7 @@
                 {% if tg.ui_addable %}
                 <div class="add-tag">
                     <form action="{{ url_for('handle_add_tag') }}" method="POST">
-                        <input type="text" id="add_tag" name="tag" required />
+                        <input type="text" id="add_tag" name="name" required />
                         <input type="hidden" name="db_id" value="{{ db_id }}">
                         <input type="hidden" name="idx" value="{{ idx }}">
                         <input type="hidden" name="tag_group_id" value="{{ tg.id }}">

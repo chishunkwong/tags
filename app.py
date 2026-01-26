@@ -15,6 +15,7 @@ from models.tag_group import TagGroup
 from models.category_tag_group import CategoryTagGroup
 from models.base import Base
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 
 load_dotenv()
@@ -71,6 +72,17 @@ def refresh_media_list():
     session.pop('tag_groups', None)
     return redirect(url_for('list_media'))
 
+def refresh_one_tag_group(id):
+    tag_group = load_one_tag_group(id)
+    tag_groups = session['tag_groups'] if 'tag_groups' in session else []
+    found = None
+    for i, tg in enumerate(tag_groups):
+        if tg.id == id:
+            found = i
+            break
+    if found is not None:
+        tag_groups[found] = tag_group
+
 @app.route('/show_media')
 def show_media():
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
@@ -92,6 +104,7 @@ def show_media():
                                bookmark=asset.bookmark,
                                should_delete=asset.should_delete,
                                tag_groups=tag_groups,
+                               tag_ids={tag.id for tag in asset.tags},
                                idx=idx,
                                total=total)
     else:
@@ -146,15 +159,12 @@ def handle_connect():
 
 @socketio.on('message')
 def handle_message(data):
-    print('Received message:', data)
     socketio.emit('response', 'Server received your message: ' + data)
 
 @socketio.on('set_asset_boolean')
 def handle_set_asset_boolean(data):
     db_id = data['db_id']
     asset = db.session.get(Asset, db_id)
-    if asset is None:
-        return
     attribute = data['attribute']
     setattr(asset, attribute, data['value'])
     db.session.commit()
@@ -169,13 +179,70 @@ def handle_set_asset_boolean(data):
 
 @socketio.on('set_tag')
 def handle_set_tag(data):
-    print("We heard your set_tag", json.dumps(data, indent=4))
-    pass
+    try:
+        checked = data["value"]
+        db_id = data["db_id"]
+        tag_group_id = int(data["tag_group_id"])
+        tag_id = data["tag_id"]
+        asset = db.session.get(Asset, db_id)
+        tag_group = db.session.get(TagGroup, tag_group_id)
+        involved_tag = db.session.get(Tag, tag_id)
+        tag_to_remove = None
+        tag_to_add = None
+        if checked:
+            tag_to_add = involved_tag
+            if not tag_group.multiselect:
+                for tag in asset.tags:
+                    if tag.tag_group_id == tag_group_id:
+                        tag_to_remove = tag
+                        break
+        else:
+            tag_to_remove = involved_tag
+        if tag_to_remove is not None:
+            asset.tags.remove(tag_to_remove)
+        if tag_to_add is not None:
+            asset.tags.append(tag_to_add)
+        db.session.add(asset)
+        db.session.commit()
+    except NoResultFound:
+        print(f"Error: No entity found for asset {db_id} or tag group {tag_group_id} or tag {tag_id}")
+    except MultipleResultsFound:
+        print("Not possible")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 @app.route('/add_tag', methods=["POST"])
 def handle_add_tag():
-    print("We heard your add_tag", request.form)
-    return redirect(url_for('show_media', idx=0))
+    try:
+        name = request.form.get("name")
+        idx = request.form.get("idx")
+        tag_group_id = int(request.form.get("tag_group_id"))
+        db_id = request.form.get("db_id")
+        asset = db.session.get(Asset, db_id)
+        tag_group = db.session.get(TagGroup, tag_group_id)
+        new_tag = Tag(name=name, tag_group_id=tag_group_id)
+        db.session.add(new_tag)
+        tag_to_remove_first = None
+        if not tag_group.multiselect:
+            for tag in asset.tags:
+                if tag.tag_group_id == tag_group_id:
+                    tag_to_remove_first = tag
+                    break
+            if tag_to_remove_first is not None:
+                asset.tags.remove(tag_to_remove_first)
+        asset.tags.append(new_tag)
+        db.session.add(asset)
+        db.session.commit()
+    except NoResultFound:
+        print(f"Error: No entity found for asset {db_id} or {tag_group_id}")
+    except MultipleResultsFound:
+        print("Not possible")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+    refresh_one_tag_group(tag_group_id)
+
+    return redirect(url_for('show_media', idx=idx))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
