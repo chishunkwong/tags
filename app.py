@@ -95,6 +95,7 @@ def show_media():
         filepath = root_dir + filename
         filesize = int(os.path.getsize(filepath) / (1024 * 1024))
         asset = ensure_media_in_db(filepath)
+        checked_tag_ids = get_checked_tag_ids(asset)
         return render_template('media.html',
                                filename=filename,
                                filesize=filesize,
@@ -105,6 +106,7 @@ def show_media():
                                should_delete=asset.should_delete,
                                tag_groups=tag_groups,
                                tag_ids={tag.id for tag in asset.tags},
+                               checked_tag_ids = checked_tag_ids,
                                idx=idx,
                                total=total)
     else:
@@ -118,6 +120,15 @@ def ensure_media_in_db(path):
         db.session.commit()
         asset = db.session.scalars(db.select(Asset).filter_by(path=path)).one_or_none()
     return asset
+
+def get_checked_tag_ids(asset):
+    seen_groups = set()
+    tag_ids = []
+    for tag in asset.tags:
+        if tag.tag_group_id not in seen_groups:
+            seen_groups.add(tag.tag_group_id)
+            tag_ids.append(str(tag.id))
+    return " ".join(tag_ids)
 
 def load_tag_groups():
     category_tag_groups = db.session.execute(db.select(CategoryTagGroup)

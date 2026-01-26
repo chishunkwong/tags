@@ -7,6 +7,7 @@
     <script type="text/javascript">
         var idx = "{{ idx }}"
         var dbId = "{{ db_id }}"
+        var checkedTagIds = "{{ checked_tag_ids }}".split(' ')
         var socket = io.connect('http://' + document.domain + ':' + location.port);
 
         socket.on('connect', function () {
@@ -35,6 +36,24 @@
                 is_multiselect: isMultiselect
             });
         }
+
+        function makeSelectedVisible(checkboxElement) {
+            if (checkboxElement && checkboxElement.checked) {
+                checkboxElement.scrollIntoView({
+                    behavior: 'smooth', // Optional: provides a smooth scrolling animation
+                    block: 'nearest'    // Scrolls to the nearest edge of the container
+                });
+                return true;
+            }
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            for (const checkedTag of checkedTagIds) {
+                const checkbox = document.getElementById(checkedTag);
+                makeSelectedVisible(checkbox);
+            }
+        });
     </script>
     {% if idx > 0 %}
     <script>
