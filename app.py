@@ -169,8 +169,13 @@ def handle_set_asset_boolean(data):
 
 @socketio.on('set_tag')
 def handle_set_tag(data):
-    print("We heard you", json.dumps(data, indent=4))
+    print("We heard your set_tag", json.dumps(data, indent=4))
     pass
+
+@app.route('/add_tag', methods=["POST"])
+def handle_add_tag():
+    print("We heard your add_tag", request.form)
+    return redirect(url_for('show_media', idx=0))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

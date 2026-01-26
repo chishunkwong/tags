@@ -5,7 +5,7 @@
 }
 
 .box {
-  border: 2px dotted rgb(96 139 168);
+  /* border: 2px dotted rgb(96 139 168); */
   display: flex;
 }
 
@@ -14,16 +14,32 @@ input[type="checkbox"], .inline-label {
     vertical-align: middle; /* Aligns them vertically */
 }
 
-.scroll-box {
-  border: 1px solid black; /* Adds a border for visibility */
-  width: 300px;             /* Sets the width of the box */
-  height: 150px;            /* Sets the height of the box */
-  overflow: auto;           /* Adds scrollbars if content overflows */
-  padding: 10px;            /* Adds some space inside the box */
+.view {
+  padding: 10px;
+  margin-right: 5px;
 }
 
-.scroll-box-0 {
-  height: 20px;
+.controls {
+  width: 540px;
+  height: 780px;
+  column-width: 250px;
+  column-fill: auto;
+}
+
+.tag-group {
+  padding: 5px 5px;
+  width: 240px;
+}
+
+.add-tag {
+  margin-top: 3px;
+}
+
+.scroll-box {
+  border: 1px solid black;
+  height: 150px;
+  overflow: auto;
+  padding: 5px;
 }
 
 .scroll-box-1 {

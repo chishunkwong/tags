@@ -48,9 +48,9 @@
     {% endif %}
 </head>
 <body>
-    <h2>{{ filename }} ({{ filesize }} MB)</h2>
     <div class="box">
-        <div>
+        <div class="view">
+            <h3>{{ filename }} ({{ filesize }} MB)</h3>
             {% if media_type == 'mp4' %}
             <video width="854" height="480" controls autoplay> 
                 <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
@@ -71,18 +71,7 @@
             <p/>
             <a href="{{ url_for('list_media') }}#{{ idx }}">Back to list</a>
         </div>
-        <div>
-            <!--
-            <form action="{{ url_for('handle_save') }}" method="POST">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
-                <br>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-                <br>
-                <input type="submit" value="Submit">
-            </form>
-            -->
+        <div class="controls">
             <div>
                 <label>
                     <input type="checkbox" id="favorite"
@@ -105,11 +94,11 @@
             <p/>
             <div>
             {% for tg in tag_groups %}
-                <fieldset>
+                <fieldset class="tag-group">
                     <legend><b>{{ tg.name }}</b></legend>
                     <div class="scroll-box scroll-box-{{ tg.show_size }}">
                     {% for tag in tg.tags %}
-                        {% if not tg.multiselect or tg.show_size <= 0 %}<div>{% endif %}
+                        {% if not tg.multiselect or tg.tag_per_line %}<div>{% endif %}
                         <label for="{{ tag.id }}" class="inline-label">
                         {% if tg.multiselect %}
                             <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
@@ -120,9 +109,20 @@
                         {% endif %}
                             {{ tag.name }}
                         </label>
-                        {% if not tg.multiselect or tg.show_size <= 0 %}</div>{% endif %}
+                        {% if not tg.multiselect or tg.tag_per_line %}</div>{% endif %}
                     {% endfor %}
                     </div>
+                {% if tg.ui_addable %}
+                <div class="add-tag">
+                    <form action="{{ url_for('handle_add_tag') }}" method="POST">
+                        <input type="text" id="add_tag" name="tag" required />
+                        <input type="hidden" name="db_id" value="{{ db_id }}">
+                        <input type="hidden" name="idx" value="{{ idx }}">
+                        <input type="hidden" name="tag_group_id" value="{{ tg.id }}">
+                        <input type="submit" value="Add tag">
+                    </form>
+                </div>
+                {% endif %}
                 </fieldset>
             {% endfor %}
             </div>

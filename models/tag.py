@@ -6,6 +6,6 @@ class Tag(Base):
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column(primary_key=True)
     tag_group_id: Mapped[int] = mapped_column(ForeignKey("tag_group.id"))
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
 
     tag_group = relationship("TagGroup", back_populates="tags")
