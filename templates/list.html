@@ -2,19 +2,26 @@
 <html>
 <head>
     <title>Media List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></link>
 </head>
 <body>
-    <h1>Media List:</h1>
-    <h3>{{ total }} files</h3>
-    <ul>
-        {% for idx in range(0, total) %} 
-        <li>
-            <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}">{{ media[idx]['path'] }}</a> {% if media[idx]['bookmarked'] %} bookmarked {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-    <form action="{{ url_for('refresh_media_list') }}" method="POST">
-        <input type="submit" value="Refresh">
-    </form>
+    <div class="box">
+        <div class="view">
+            <h1>Media List:</h1>
+            <h3>{{ total }} files</h3>
+            <ul>
+                {% for idx in range(0, total) %} 
+                <li>
+                    <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}">{{ media[idx]['path'] }}</a> {% if media[idx]['bookmarked'] %} bookmarked {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            <form action="{{ url_for('refresh_media_list') }}" method="POST">
+                <input type="submit" value="Refresh">
+            </form>
+        </div>
+        <div class="controls">
+        </div>
+    </div>
 </body>
 </html>
