@@ -42,7 +42,9 @@ def index():
 
 @app.route('/list_media')
 def list_media():
-    if 'tag_groups' not in session:
+    if 'tag_groups' in session:
+        tag_groups = session['tag_groups']
+    else:
         tag_groups = load_tag_groups()
         session['tag_groups'] = tag_groups
     if 'cached_filenames' not in session:
@@ -64,6 +66,13 @@ def list_media():
         }
     return render_template('list.html',
                            media=media,
+                           search_mode=True,
+                           checked_tag_ids = "TODO",
+                           favorite=False,
+                           bookmark=False,
+                           should_delete=False,
+                           tag_groups=tag_groups,
+                           tag_ids=[],
                            total=len(cached_filenames))
 
 @app.route('/refresh_media_list', methods=['GET', 'POST'])

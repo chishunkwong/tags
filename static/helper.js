@@ -15,6 +15,26 @@ document.addEventListener('keydown', (event) => {
   }
 }, false);
 
+function handleSetAssetBoolean(checkbox, attribute) {
+  if (isSearchMode) return;
+  socket.emit('set_asset_boolean', {
+    db_id: dbId,
+    attribute,
+    value: checkbox.checked
+  });
+}
+
+function handleTagClicked(checkbox, isMultiselect, tagGroupId) {
+  if (isSearchMode) return;
+  socket.emit('set_tag', {
+    db_id: dbId,
+    tag_id: checkbox.id,
+    value: checkbox.checked,
+    tag_group_id: tagGroupId,
+    is_multiselect: isMultiselect
+  });
+}
+
 function makeSelectedVisible(checkboxElement) {
   if (checkboxElement && checkboxElement.checked) {
     checkboxElement.scrollIntoView({

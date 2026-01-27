@@ -25,7 +25,7 @@ input[type="checkbox"], .inline-label {
 .view {
   padding: 10px;
   margin-right: 5px;
-  width:860px;
+  width: 860px;
 }
 
 .controls {
@@ -33,6 +33,10 @@ input[type="checkbox"], .inline-label {
   height: 780px;
   column-width: 250px;
   column-fill: auto;
+}
+
+.search-button {
+  padding: 5px;
 }
 
 .tag-group {

@@ -3,6 +3,11 @@
 <head>
     <title>Media List</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></link>
+    <script type="text/javascript">
+        var isSearchMode = "{{ search_mode }}".toLowerCase() === "true";
+        var checkedTagIds = "{{ checked_tag_ids }}".split(' ');
+    </script>
+    <script src="{{ url_for('static', filename='helper.js') }}"></script>
 </head>
 <body>
     <div class="box">
@@ -20,8 +25,7 @@
                 <input type="submit" value="Refresh">
             </form>
         </div>
-        <div class="controls">
-        </div>
+        {% include './controls.html' %}
     </div>
 </body>
 </html>

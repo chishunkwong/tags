@@ -1,0 +1,67 @@
+<div class="controls">
+  {% if search_mode %}<form action="{{ url_for('handle_search') }}" method="POST">{% endif %}
+  <div>
+      <label>
+          <input type="checkbox" id="favorite" name="favorite"
+          {% if favorite %} checked {% endif %}
+          onclick="handleSetAssetBoolean(this, 'favorite')">Favorite</input>
+      </label>
+      <br/>
+      <label>
+          <input type="checkbox" id="bookmark" name="bookmark"
+          {% if bookmark %} checked {% endif %}
+          onclick="handleSetAssetBoolean(this, 'bookmark')">Bookmark</input>
+      </label>
+      <br/>
+      <label>
+          <input type="checkbox" id="should_delete" name="should_delete"
+          {% if should_delete %} checked {% endif %}
+          onclick="handleSetAssetBoolean(this, 'should_delete')">Should delete</input>
+      </label>
+  </div>
+  <p/>
+  <div>
+  {% for tg in tag_groups %}
+      <fieldset class="tag-group">
+          <legend><b>{{ tg.name }}</b></legend>
+          <div class="scroll-box scroll-box-{{ tg.show_size }}">
+          {% for tag in tg.tags %}
+              {% if not tg.multiselect or tg.tag_per_line %}<div>{% endif %}
+              <label for="{{ tag.id }}" class="inline-label">
+                  <input
+                  {% if tg.multiselect or search_mode %}
+                      type="checkbox"
+                      name="{{ tag.id }}"
+                  {% else %}
+                      type="radio"
+                      name="{{ tg.id }}"
+                  {% endif %}
+                      id="{{ tag.id }}"
+                  {% if tag.id in tag_ids %}checked{% endif %}
+                      onclick="handleTagClicked(this, true, {{ tg.id }})" />
+                  {{ tag.name }}
+              </label>
+              {% if not tg.multiselect or tg.tag_per_line %}</div>{% endif %}
+          {% endfor %}
+          </div>
+      {% if tg.ui_addable and not search_mode %}
+      <div class="add-tag">
+          <form action="{{ url_for('handle_add_tag') }}" method="POST">
+              <input type="text" id="add_tag" name="name" required />
+              <input type="hidden" name="db_id" value="{{ db_id }}">
+              <input type="hidden" name="idx" value="{{ idx }}">
+              <input type="hidden" name="tag_group_id" value="{{ tg.id }}">
+              <input type="submit" value="Add tag">
+          </form>
+      </div>
+      {% endif %}
+      </fieldset>
+  {% endfor %}
+  </div>
+  {% if search_mode %}
+    <div class="search-button">
+      <input type="submit" value="Search">
+    </div>
+  </form>
+  {% endif %}
+</div>
