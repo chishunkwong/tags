@@ -24,11 +24,11 @@ function handleSetAssetBoolean(checkbox, attribute) {
   });
 }
 
-function handleTagClicked(checkbox, isMultiselect, tagGroupId) {
+function handleTagClicked(checkbox, isMultiselect, tagId, tagGroupId) {
   if (isSearchMode) return;
   socket.emit('set_tag', {
     db_id: dbId,
-    tag_id: checkbox.id,
+    tag_id: tagId,
     value: checkbox.checked,
     tag_group_id: tagGroupId,
     is_multiselect: isMultiselect
@@ -48,7 +48,7 @@ function makeSelectedVisible(checkboxElement) {
 
 document.addEventListener('DOMContentLoaded', function() {
   for (const checkedTag of checkedTagIds) {
-    const checkbox = document.getElementById(checkedTag);
+    const checkbox = document.getElementById('tag_' + checkedTag);
     makeSelectedVisible(checkbox);
   }
 });

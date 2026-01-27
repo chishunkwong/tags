@@ -47,7 +47,39 @@ def list_media():
     else:
         tag_groups = load_tag_groups()
         session['tag_groups'] = tag_groups
-    if 'cached_filenames' not in session:
+    filtered_media = get_filtered_media()
+    media = {}
+    bookmarks = load_bookmarks()
+    for idx, path in enumerate(filtered_media):
+        media[idx] = {
+            'path': path,
+            'bookmarked': (root_dir + path) in bookmarks
+        }
+    query = session["query"] if "query" in session else {}
+    tag_ids = []
+    for key in query.keys():
+        #TODO: use constant
+        if key.startswith("tag_"):
+            tag_ids.append(int(key[len("tag_"):]))
+    return render_template('list.html',
+                           media=media,
+                           search_mode=True,
+                           checked_tag_ids = "TODO",
+                           favorite=("bool_" + "favorite") in query,
+                           bookmark=("bool_" + "bookmark") in query,
+                           should_delete=("bool_" + "should_delete") in query,
+                           tag_groups=tag_groups,
+                           tag_ids=tag_ids,
+                           total=len(filtered_media))
+
+def get_filtered_media():
+    if 'filtered_media' not in session:
+        scan_all_available_media()
+        filter_by_searched()
+    return session['filtered_media']
+
+def scan_all_available_media():
+    if 'all_available_media' not in session:
         root_len = len(root_dir)
         media_arr = []
         for filename in glob.iglob(root_dir + '**/*.' + extension, recursive=True):
@@ -55,30 +87,27 @@ def list_media():
                 rel_path = filename[root_len:]
                 media_arr.append(rel_path)
         media_arr.sort()
-        session['cached_filenames'] = media_arr
-    cached_filenames = session['cached_filenames']
-    media = {}
-    bookmarks = load_bookmarks()
-    for idx, path in enumerate(cached_filenames):
-        media[idx] = {
-            'path': path,
-            'bookmarked': (root_dir + path) in bookmarks
-        }
-    return render_template('list.html',
-                           media=media,
-                           search_mode=True,
-                           checked_tag_ids = "TODO",
-                           favorite=False,
-                           bookmark=False,
-                           should_delete=False,
-                           tag_groups=tag_groups,
-                           tag_ids=[],
-                           total=len(cached_filenames))
+        session['all_available_media'] = media_arr
+
+def filter_by_searched():
+    all_available_media = session['all_available_media']
+    if 'assets' not in session:
+        session['filtered_media'] = all_available_media
+        return
+    filtered_paths = set()
+    assets = session['assets']
+    for asset in assets:
+        filtered_paths.add(asset['path'])
+    session['filtered_media'] = \
+        [rel_path for rel_path in all_available_media if (root_dir + rel_path) in filtered_paths]
 
 @app.route('/refresh_media_list', methods=['GET', 'POST'])
 def refresh_media_list():
-    session.pop('cached_filenames', None)
+    session.pop('all_available_media', None)
+    session.pop('filtered_media', None)
     session.pop('tag_groups', None)
+    session.pop('assets', None)
+    session.pop('query', None)
     return redirect(url_for('list_media'))
 
 def refresh_one_tag_group(id):
@@ -94,18 +123,39 @@ def refresh_one_tag_group(id):
 
 @app.route('/search', methods=["POST"])
 def handle_search():
+    session.pop('filtered_media', None)
     print("Search data:", request.form)
+    query = request.form
+    if query["action"] == "Clear":
+        session.pop('assets', None)
+        session.pop('query', None)
+        return redirect(url_for('list_media'))
+    session['query'] = query
+    bool_filters = {}
+    tag_filters = []
+    for key, value in query.items():
+        print(key, '=', value)
+        #TODO: use constants
+        if key.startswith("bool_"):
+            bool_filters[key[len("bool_"):]] = True
+        if key.startswith("tag_"):
+            tag_filters.append(int(key[len("tag_"):]))
+    stmt = db.select(Asset).filter_by(**bool_filters).filter(Asset.path.startswith(root_dir))
+    for tag_id in tag_filters:
+        stmt = stmt.where(Asset.tags.any(Tag.id == tag_id))
+    assets = db.session.scalars(stmt)
+    session['assets'] = [asset.to_dict() for asset in assets]
     return redirect(url_for('list_media'))
 
 @app.route('/show_media')
 def show_media():
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
-    cached_filenames = session['cached_filenames'] if 'cached_filenames' in session else None
-    total = len(cached_filenames) if cached_filenames is not None else 1
+    filtered_media = session['filtered_media'] if 'filtered_media' in session else None
+    total = len(filtered_media) if filtered_media is not None else 1
     idx_str = request.args.get('idx')
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
-    if cached_filenames is not None and idx >= 0 and idx < total:
-        filename = cached_filenames[idx]
+    if filtered_media is not None and idx >= 0 and idx < total:
+        filename = filtered_media[idx]
         filepath = root_dir + filename
         filesize = int(os.path.getsize(filepath) / (1024 * 1024))
         asset = ensure_media_in_db(filepath)
@@ -169,7 +219,7 @@ def load_bookmarks():
 def send_media():
   try:
     idx = request.args.get('idx')
-    file_path = root_dir + session['cached_filenames'][int(idx)]
+    file_path = root_dir + session['filtered_media'][int(idx)]
     return send_file(file_path)
   except BaseException as e:
     print (e)

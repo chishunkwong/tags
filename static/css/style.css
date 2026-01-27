@@ -35,6 +35,10 @@ input[type="checkbox"], .inline-label {
   column-fill: auto;
 }
 
+.search-buttons {
+  display: flex;
+}
+
 .search-button {
   padding: 5px;
 }
