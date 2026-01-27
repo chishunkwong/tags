@@ -13,8 +13,22 @@ document.addEventListener('keydown', (event) => {
     console.log("focus", document.activeElement.tagName)
     window.location = window.next_media;
   }
-  else {
-    console.log("keyValue: " + keyValue);
-    console.log("codeValue: " + codeValue);
-  }
 }, false);
+
+function makeSelectedVisible(checkboxElement) {
+  if (checkboxElement && checkboxElement.checked) {
+    checkboxElement.scrollIntoView({
+      behavior: 'smooth', // Optional: provides a smooth scrolling animation
+      block: 'nearest'    // Scrolls to the nearest edge of the container
+    });
+    return true;
+  }
+  return false;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  for (const checkedTag of checkedTagIds) {
+    const checkbox = document.getElementById(checkedTag);
+    makeSelectedVisible(checkbox);
+  }
+});

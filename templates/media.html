@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="{{ url_for('static', filename='helper.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></link>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.js"></script>
     <script type="text/javascript">
@@ -24,7 +23,11 @@
         });
 
         function handleSetAssetBoolean(checkbox, attribute) {
-            socket.emit('set_asset_boolean', { db_id: dbId, attribute, value: checkbox.checked });
+            socket.emit('set_asset_boolean', {
+                db_id: dbId,
+                attribute,
+                value: checkbox.checked
+            });
         }
 
         function handleTagClicked(checkbox, isMultiselect) {
@@ -37,24 +40,8 @@
             });
         }
 
-        function makeSelectedVisible(checkboxElement) {
-            if (checkboxElement && checkboxElement.checked) {
-                checkboxElement.scrollIntoView({
-                    behavior: 'smooth', // Optional: provides a smooth scrolling animation
-                    block: 'nearest'    // Scrolls to the nearest edge of the container
-                });
-                return true;
-            }
-            return false;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            for (const checkedTag of checkedTagIds) {
-                const checkbox = document.getElementById(checkedTag);
-                makeSelectedVisible(checkbox);
-            }
-        });
     </script>
+    <script src="{{ url_for('static', filename='helper.js') }}"></script>
     {% if idx > 0 %}
     <script>
       window.previous_media = "{{ url_for('show_media', idx=idx-1) }}";
