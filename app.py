@@ -83,6 +83,11 @@ def refresh_one_tag_group(id):
     if found is not None:
         tag_groups[found] = tag_group
 
+@app.route('/search', methods=["POST"])
+def handle_search():
+    print("Search data:", request.form)
+    return redirect(url_for('list_media'))
+
 @app.route('/show_media')
 def show_media():
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
@@ -101,6 +106,7 @@ def show_media():
                                filesize=filesize,
                                media_type=extension,
                                db_id=asset.id,
+                               search_mode=False,
                                favorite=asset.favorite,
                                bookmark=asset.bookmark,
                                should_delete=asset.should_delete,

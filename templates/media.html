@@ -5,9 +5,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></link>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.js"></script>
     <script type="text/javascript">
-        var idx = "{{ idx }}"
-        var dbId = "{{ db_id }}"
-        var checkedTagIds = "{{ checked_tag_ids }}".split(' ')
+        var idx = "{{ idx }}";
+        var dbId = "{{ db_id }}";
+        var isSearchMode = "{{ search_mode }}".toLowerCase() === "true";
+        var checkedTagIds = "{{ checked_tag_ids }}".split(' ');
         var socket = io.connect('http://' + document.domain + ':' + location.port);
 
         socket.on('connect', function () {
@@ -24,6 +25,7 @@
         });
 
         function handleSetAssetBoolean(checkbox, attribute) {
+            if (isSearchMode) return;
             socket.emit('set_asset_boolean', {
                 db_id: dbId,
                 attribute,
@@ -31,12 +33,13 @@
             });
         }
 
-        function handleTagClicked(checkbox, isMultiselect) {
+        function handleTagClicked(checkbox, isMultiselect, tagGroupId) {
+            if (isSearchMode) return;
             socket.emit('set_tag', {
                 db_id: dbId,
                 tag_id: checkbox.id,
                 value: checkbox.checked,
-                tag_group_id: checkbox.name,
+                tag_group_id: tagGroupId,
                 is_multiselect: isMultiselect
             });
         }
@@ -79,21 +82,22 @@
             <a href="{{ url_for('list_media') }}#{{ idx }}">Back to list</a>
         </div>
         <div class="controls">
+            {% if search_mode %}<form action="{{ url_for('handle_search') }}" method="POST">{% endif %}
             <div>
                 <label>
-                    <input type="checkbox" id="favorite"
+                    <input type="checkbox" id="favorite" name="favorite"
                     {% if favorite %} checked {% endif %}
                     onclick="handleSetAssetBoolean(this, 'favorite')">Favorite</input>
                 </label>
                 <br/>
                 <label>
-                    <input type="checkbox" id="bookmark"
+                    <input type="checkbox" id="bookmark" name="bookmark"
                     {% if bookmark %} checked {% endif %}
                     onclick="handleSetAssetBoolean(this, 'bookmark')">Bookmark</input>
                 </label>
                 <br/>
                 <label>
-                    <input type="checkbox" id="should_delete"
+                    <input type="checkbox" id="should_delete" name="should_delete"
                     {% if should_delete %} checked {% endif %}
                     onclick="handleSetAssetBoolean(this, 'should_delete')">Should delete</input>
                 </label>
@@ -107,21 +111,23 @@
                     {% for tag in tg.tags %}
                         {% if not tg.multiselect or tg.tag_per_line %}<div>{% endif %}
                         <label for="{{ tag.id }}" class="inline-label">
-                        {% if tg.multiselect %}
-                            <input type="checkbox" id="{{ tag.id }}" name="{{ tg.id }}"
+                            <input
+                            {% if tg.multiselect or search_mode %}
+                                type="checkbox"
+                                name="{{ tag.id }}"
+                            {% else %}
+                                type="radio"
+                                name="{{ tg.id }}"
+                            {% endif %}
+                                id="{{ tag.id }}"
                             {% if tag.id in tag_ids %}checked{% endif %}
-                            onclick="handleTagClicked(this, true)" />
-                        {% else %}
-                            <input type="radio" id="{{ tag.id }}" name="{{ tg.id }}" value="{{ tag.id }}"
-                            {% if tag.id in tag_ids %}checked{% endif %}
-                            onclick="handleTagClicked(this, false)" />
-                        {% endif %}
+                                onclick="handleTagClicked(this, true, {{ tg.id }})" />
                             {{ tag.name }}
                         </label>
                         {% if not tg.multiselect or tg.tag_per_line %}</div>{% endif %}
                     {% endfor %}
                     </div>
-                {% if tg.ui_addable %}
+                {% if tg.ui_addable and not search_mode %}
                 <div class="add-tag">
                     <form action="{{ url_for('handle_add_tag') }}" method="POST">
                         <input type="text" id="add_tag" name="name" required />
@@ -135,6 +141,10 @@
                 </fieldset>
             {% endfor %}
             </div>
+            {% if search_mode %}
+                <p/><input type="submit" value="Search">
+            </form>
+            {% endif %}
         </div>
     </div>
 </body>
