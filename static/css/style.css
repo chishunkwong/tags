@@ -28,6 +28,13 @@ input[type="checkbox"], .inline-label {
   width: 860px;
 }
 
+.disabled-link {
+    pointer-events: none; /* Disables mouse events */
+    cursor: default;     /* Changes the cursor appearance */
+    color: gray;         /* Styles the link as disabled */
+    text-decoration: none;
+}
+
 .controls {
   width: 540px;
   height: 780px;
