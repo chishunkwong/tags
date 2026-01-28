@@ -50,10 +50,12 @@ def list_media():
     filtered_media = get_filtered_media()
     media = {}
     bookmarks = load_bookmarks()
+    favorites = load_favorites()
     for idx, path in enumerate(filtered_media):
         media[idx] = {
             'path': path,
-            'bookmarked': (root_dir + path) in bookmarks
+            'bookmarked': (root_dir + path) in bookmarks,
+            'favorite': (root_dir + path) in favorites,
         }
     query = session["query"] if "query" in session else {}
     tag_ids = []
@@ -208,12 +210,18 @@ def load_one_tag_group(id):
                               .filter_by(id=id)
                               ).unique().one()
 
-# Return a set of bookmarks
+# Return a set of paths
 def load_bookmarks():
     bookmarked = db.session.execute(db.select(Asset)
                                     .filter_by(bookmark=True)
                                     ).scalars().all()
     return {asset.path for asset in bookmarked}
+
+def load_favorites():
+    favorites = db.session.execute(db.select(Asset)
+                                   .filter_by(favorite=True)
+                                   ).scalars().all()
+    return {asset.path for asset in favorites}
 
 @app.route('/send_media')
 def send_media():
