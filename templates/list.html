@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Media List</title>
-    <link rel="shortcut icon" href="{{ url_for('static', filename='penguin.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='turtle.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></link>
     <script type="text/javascript">
         var isSearchMode = "{{ search_mode }}".toLowerCase() === "true";
@@ -13,8 +13,8 @@
 <body>
     <div class="box">
         <div class="view">
-            <h1>Media List:</h1>
-            <h3>{{ total }} files</h3>
+            <h3 class="title">Media List:</h3>
+            <h4>{{ total }} files</h4>
             <ul>
                 {% for idx in range(0, total) %} 
                 <li>
@@ -23,7 +23,7 @@
                     {{ media[idx]['path'] }}
                     {% if media[idx]['favorite'] %}<img src="{{ url_for('static', filename='heart.svg') }}" width="18" height="18"
                     alt="Fav">{% endif %}{% if media[idx]['bookmarked'] %}<img src="{{ url_for('static', filename='bookmark.svg') }}" width="18" height="18"
-                    alt="Marked">{% endif %}</a>
+                    alt="Marked">*{% endif %}</a>
                 </li>
                 {% endfor %}
             </ul>

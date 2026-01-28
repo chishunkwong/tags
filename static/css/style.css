@@ -23,9 +23,16 @@ input[type="checkbox"], .inline-label {
 }
 
 .view {
-  padding: 10px;
   margin-right: 5px;
+  padding: 5px;
   width: 860px;
+  height: 770px;
+  overflow: auto;
+}
+
+.title {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .disabled-link {
@@ -60,33 +67,44 @@ input[type="checkbox"], .inline-label {
   margin-top: 3px;
 }
 
-.scroll-box {
-  border: 1px solid black;
+.tags-scroll-box {
   height: 150px;
   overflow: auto;
   padding: 3px;
 }
 
-.scroll-box-1 {
+.tags-scroll-box-1 {
   height: 20px;
 }
 
-.scroll-box-2 {
+.tags-scroll-box-2 {
   height: 40px;
 }
 
-.scroll-box-3 {
+.tags-scroll-box-3 {
   height: 60px;
 }
 
-.scroll-box-4 {
+.tags-scroll-box-4 {
   height: 80px;
 }
 
-.scroll-box-5 {
+.tags-scroll-box-5 {
   height: 100px;
 }
 
-.scroll-box-6 {
+.tags-scroll-box-6 {
   height: 120px;
+}
+
+.tags-scroll-box-7 {
+  height: 140px;
+}
+
+.tags-scroll-box-8 {
+  height: 160px;
+}
+
+.tags-scroll-box-9 {
+  height: 180px;
 }
