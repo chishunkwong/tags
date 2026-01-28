@@ -51,7 +51,7 @@
               <input type="hidden" name="db_id" value="{{ db_id }}">
               <input type="hidden" name="idx" value="{{ idx }}">
               <input type="hidden" name="tag_group_id" value="{{ tg.id }}">
-              <input type="submit" value="Add tag">
+              <input type="submit" value="Add {{ tg.name|lower }}">
           </form>
       </div>
       {% endif %}

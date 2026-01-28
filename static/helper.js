@@ -1,17 +1,16 @@
 document.addEventListener('keydown', (event) => {
   var keyValue = event.key;
   var codeValue = event.code;
-  if (document.activeElement.tagName != 'INPUT'
-    && (keyValue === 'ArrowLeft' || keyValue === 'P' || keyValue === 'p')
-    && window.previous_media) {
-    console.log("focus", document.activeElement.tagName)
-    window.location = window.previous_media;
-  }
-  else if (document.activeElement.tagName != 'INPUT'
-    && (keyValue === 'ArrowRight' || keyValue === 'N' || keyValue === 'n')
-    && window.next_media) {
-    console.log("focus", document.activeElement.tagName)
-    window.location = window.next_media;
+  var activeElement = document.activeElement;
+  if (!(activeElement.tagName == 'INPUT' && activeElement.type == 'text')) {
+    if ((keyValue === 'ArrowLeft' || keyValue === 'P' || keyValue === 'p') && window.previous_media) {
+      console.log("focus", document.activeElement.tagName)
+      window.location = window.previous_media;
+    }
+    else if ((keyValue === 'ArrowRight' || keyValue === 'N' || keyValue === 'n') && window.next_media) {
+      console.log("focus", document.activeElement.tagName)
+      window.location = window.next_media;
+    }
   }
 }, false);
 
