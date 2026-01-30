@@ -19,11 +19,11 @@
                 {% for idx in range(0, total) %} 
                 <li>
                     <a id="{{ idx }}" href="{{ url_for('show_media', idx=idx) }}"
-                    tabindex="{% if media[idx]['bookmarked'] or media[idx]['favorite'] %}0{% else %}-1{% endif %}">
+                    tabindex="{% if media[idx]['bookmarked'] %}0{% else %}-1{% endif %}">
                     {{ media[idx]['path'] }}
                     {% if media[idx]['favorite'] %}<img src="{{ url_for('static', filename='heart.svg') }}" width="18" height="18"
                     alt="Fav">{% endif %}{% if media[idx]['bookmarked'] %}<img src="{{ url_for('static', filename='bookmark.svg') }}" width="18" height="18"
-                    alt="Marked">*{% endif %}</a>
+                    alt="Marked">{% endif %}</a>
                 </li>
                 {% endfor %}
             </ul>
