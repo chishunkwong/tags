@@ -241,6 +241,10 @@ def handle_save():
 def handle_connect():
     print('Client connected')
 
+@socketio.on('disconnect')
+def handle_connect():
+    print('Client disconnected')
+
 @socketio.on('message')
 def handle_message(data):
     socketio.emit('response', 'Server received your message: ' + data)

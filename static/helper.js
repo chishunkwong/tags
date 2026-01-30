@@ -23,14 +23,28 @@ function handleSetAssetBoolean(checkbox, attribute) {
   });
 }
 
-function handleTagClicked(checkbox, isMultiselect, tagId, tagGroupId) {
+function handleTagSingleSelected(selectBox, tagGroupId) {
+  var tagId = selectBox.options[selectBox.selectedIndex].value;
+  if (isSearchMode) {
+    if (parseInt(tagId, 10) > 0) {
+      selectBox.name = "tag_" + tagId;
+    }
+  } else {
+    handleTagSelected(true, tagId, tagGroupId);
+  }
+}
+
+function handleTagClicked(checkbox, tagId, tagGroupId) {
+  handleTagSelected(checkbox.checked, tagId, tagGroupId);
+}
+
+function handleTagSelected(selected, tagId, tagGroupId) {
   if (isSearchMode) return;
   socket.emit('set_tag', {
     db_id: dbId,
     tag_id: tagId,
-    value: checkbox.checked,
+    value: selected,
     tag_group_id: tagGroupId,
-    is_multiselect: isMultiselect
   });
 }
 

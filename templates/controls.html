@@ -25,24 +25,25 @@
       <fieldset class="tag-group">
           <legend><b>{{ tg.name }}</b></legend>
           <div class="tags-scroll-box tags-scroll-box-{{ tg.show_size }}">
-          {% for tag in tg.tags %}
-              {% if not tg.multiselect or tg.tag_per_line %}<div>{% endif %}
+          {% if not tg.multiselect %}
+              <select id="tag_group_{{ tg.id }}" onchange="handleTagSingleSelected(this, {{ tg.id }});">
+                  <option value="-1">{% if search_mode %}All{% else %}Not specified{% endif %}</option>
+                  {% for tag in tg.tags %}
+                  <option value="{{ tag.id }}" {% if tag.id in tag_ids %}selected{% endif %} >{{ tag.name }}</option>
+                  {% endfor %}
+              </select>
+          {% else %}
+              {% for tag in tg.tags %}
+              {% if tg.tag_per_line %}<div>{% endif %}
               <label for="tag_{{ tag.id }}" class="inline-label">
-                  <input
-                  {% if tg.multiselect or search_mode %}
-                      type="checkbox"
-                      name="tag_{{ tag.id }}"
-                  {% else %}
-                      type="radio"
-                      name="tag_group_{{ tg.id }}"
-                  {% endif %}
-                      id="tag_{{ tag.id }}"
-                  {% if tag.id in tag_ids %}checked{% endif %}
-                      onclick="handleTagClicked(this, true, {{ tag.id }}, {{ tg.id }})" />
+                  <input type="checkbox" name="tag_{{ tag.id }}" id="tag_{{ tag.id }}"
+                      {% if tag.id in tag_ids %}checked{% endif %}
+                      onclick="handleTagClicked(this, {{ tag.id }}, {{ tg.id }})" />
                   {{ tag.name }}
               </label>
-              {% if not tg.multiselect or tg.tag_per_line %}</div>{% endif %}
-          {% endfor %}
+              {% if tg.tag_per_line %}</div>{% endif %}
+              {% endfor %}
+          {% endif %}
           </div>
       {% if tg.ui_addable and not search_mode %}
       <div class="add-tag">
