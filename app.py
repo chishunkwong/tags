@@ -84,9 +84,10 @@ def scan_all_available_media():
     if 'all_available_media' not in session:
         root_len = len(root_dir)
         media_arr = []
-        for filename in glob.iglob(root_dir + '**/*.' + extension, recursive=True):
-            if not Path(filename).is_symlink():
-                rel_path = filename[root_len:]
+        root_path = Path(root_dir)
+        for path in root_path.rglob('*.' + extension, case_sensitive=False):
+            if not Path(path).is_symlink():
+                rel_path = str(path)[root_len:]
                 media_arr.append(rel_path)
         media_arr.sort()
         session['all_available_media'] = media_arr

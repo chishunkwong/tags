@@ -41,7 +41,7 @@
     <div class="box">
         <div class="view">
             <h3 class="title">{{ filename }} ({{ filesize }} MB)</h3>
-            {% if media_type == 'mp4' %}
+            {% if media_type == 'mp4' or media_type == 'mov' %}
             <video width="854" height="480" controls autoplay> 
                 <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
             </video>
