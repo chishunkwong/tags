@@ -104,12 +104,18 @@ def filter_by_searched():
     session['filtered_media'] = \
         [rel_path for rel_path in all_available_media if (root_dir + rel_path) in filtered_paths]
 
-@app.route('/refresh_media_list', methods=['GET', 'POST'])
-def refresh_media_list():
+@app.route('/refresh_all', methods=['GET', 'POST'])
+def refresh_all():
     session.pop('all_available_media', None)
     session.pop('filtered_media', None)
     session.pop('tag_groups', None)
     session.pop('assets', None)
+    session.pop('query', None)
+    return redirect(url_for('list_media'))
+
+@app.route('/refresh_tags', methods=['GET', 'POST'])
+def refresh_tags():
+    session.pop('tag_groups', None)
     session.pop('query', None)
     return redirect(url_for('list_media'))
 

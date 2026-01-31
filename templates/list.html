@@ -27,9 +27,15 @@
                 </li>
                 {% endfor %}
             </ul>
-            <form action="{{ url_for('refresh_media_list') }}" method="POST">
+            <div class="side-by-side">
+              <form action="{{ url_for('refresh_all') }}" method="POST">
                 <input type="submit" value="Refresh">
-            </form>
+              </form>
+              &nbsp;
+              <form action="{{ url_for('refresh_tags') }}" method="POST">
+                <input type="submit" value="Refresh tags">
+              </form>
+            </div>
         </div>
         {% include './controls.html' %}
     </div>
