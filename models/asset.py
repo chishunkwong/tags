@@ -11,7 +11,7 @@ class Asset(Base):
     bookmark: Mapped[bool] = mapped_column(index=True, nullable=True)
     #Intentionally use two differnt ways for nullable, just to learn
     should_delete: Mapped[Optional[bool]]
-    tags = relationship('Tag', order_by='Tag.name', secondary=asset_tag_table)
+    tags = relationship('Tag', order_by='Tag.name', secondary=asset_tag_table, passive_deletes=True)
 
     def to_dict(self):
         return {

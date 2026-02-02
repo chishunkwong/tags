@@ -35,6 +35,15 @@ input[type="checkbox"], .inline-label {
   overflow: auto;
 }
 
+.view img {
+  width: auto; /* Ensures the image doesn't exceed its container's width or its original width */
+  height: auto; /* Ensures the image doesn't exceed its container's width or its original width */
+  max-height: 100%;    /* Automatically adjusts height to maintain aspect ratio */
+  max-width: 100%;    /* Automatically adjusts height to maintain aspect ratio */
+  display: block;  /* Helps with centering and layout issues */
+  margin: 0 auto;  /* Centers the image if it's smaller than the container width */
+}
+
 .title {
   margin-top: 10px;
   margin-bottom: 10px;

@@ -1,11 +1,11 @@
+Support mov and mp4 at the same time (simiarly heic and jpg), actually more like support multiple extensions at the same time, even if they are different types of media, but what to do with tag groups?
 Not tagged button
 Navigation panel stays at the bottom
 Uinque constraings (Same named tags can be in two diff groups)
 Scoring based on time lingering on media, tag numbers, tag scores, etc
 Date of media creation (modification?), search by date range
-Move to trash
-Support mov and mp4 at the same time (simiarly heic and jpg)
-Carry next
+--Move to trash
+--Carry next
 --Dropdown tag group
 Auto video length detect
 Auto faces recognition

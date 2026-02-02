@@ -4,12 +4,16 @@ document.addEventListener('keydown', (event) => {
   var activeElement = document.activeElement;
   if (!(activeElement.tagName == 'INPUT' && activeElement.type == 'text')) {
     if ((keyValue === 'ArrowLeft' || keyValue === 'P' || keyValue === 'p') && window.previous_media) {
-      console.log("focus", document.activeElement.tagName)
       window.location = window.previous_media;
     }
     else if ((keyValue === 'ArrowRight' || keyValue === 'N' || keyValue === 'n') && window.next_media) {
-      console.log("focus", document.activeElement.tagName)
       window.location = window.next_media;
+    }
+    else if (keyValue === 'Delete' || keyValue === 'Backspace') {
+      window.location.href = window.delete_url;
+    }
+    else {
+      console.log(keyValue, codeValue)
     }
   }
 }, false);

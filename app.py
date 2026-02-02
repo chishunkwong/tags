@@ -1,5 +1,5 @@
-import glob
 import os
+import shutil
 import json
 from pathlib import Path
 from random import randint
@@ -29,9 +29,10 @@ Session(app)
 db = SQLAlchemy(app, model_class=Base)
 migrate = Migrate(app, db)
 
-root_dir = os.getenv("ROOT_DIR")
-if root_dir[-1] != '/':
-    root_dir = root_dir + '/'
+base_root_dir = os.getenv("ROOT_DIR")
+trash_dir = os.getenv("TRASH_DIR")
+if trash_dir[-1] != '/':
+    trash_dir = trash_dir + '/'
 extension = os.getenv("EXT")
 
 category = os.getenv("CATEGORY")
@@ -42,8 +43,28 @@ socketio = SocketIO(app, manage_session=False)
 def index():
     return render_template('index.html')
 
+def get_and_set_root_dir():
+    root_dir = request.args.get('root_dir')
+    if root_dir:
+        session.pop('all_available_media', None)
+        session.pop('filtered_media', None)
+        session.pop('assets', None)
+        session['user_specified_root_dir'] = True
+    elif 'root_dir' in session:
+        root_dir = session['root_dir']
+    else:
+        root_dir = base_root_dir
+    if root_dir[-1] != '/':
+        root_dir = root_dir + '/'
+    session['root_dir'] = root_dir
+    return root_dir
+
+def get_root_dir():
+    return session['root_dir'] if 'root_dir' in session else base_root_dir
+
 @app.route('/list_media')
 def list_media():
+    root_dir = get_and_set_root_dir()
     session.pop('carries', None)
     if 'tag_groups' in session:
         tag_groups = session['tag_groups']
@@ -84,6 +105,7 @@ def get_filtered_media():
     return session['filtered_media']
 
 def scan_all_available_media():
+    root_dir = get_root_dir()
     if 'all_available_media' not in session:
         root_len = len(root_dir)
         media_arr = []
@@ -96,6 +118,7 @@ def scan_all_available_media():
         session['all_available_media'] = media_arr
 
 def filter_by_searched():
+    root_dir = get_root_dir()
     all_available_media = session['all_available_media']
     if 'assets' not in session:
         session['filtered_media'] = all_available_media
@@ -115,7 +138,10 @@ def refresh_all():
     session.pop('assets', None)
     session.pop('query', None)
     session.pop('carries', None)
-    return redirect(url_for('list_media'))
+    if 'user_specified_root_dir' in session:
+        return redirect(url_for('list_media', root_dir=session['root_dir']))
+    else:
+        return redirect(url_for('list_media'))
 
 @app.route('/refresh_tags', methods=['GET', 'POST'])
 def refresh_tags():
@@ -137,6 +163,7 @@ def refresh_one_tag_group(id):
 
 @app.route('/search', methods=["POST"])
 def handle_search():
+    root_dir = get_root_dir()
     session.pop('filtered_media', None)
     print("Search data:", request.form)
     query = request.form
@@ -162,6 +189,7 @@ def handle_search():
 
 @app.route('/show_media')
 def show_media():
+    root_dir = get_root_dir()
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
     carries = session['carries'] if 'carries' in session else set()
     filtered_media = session['filtered_media'] if 'filtered_media' in session else None
@@ -171,7 +199,15 @@ def show_media():
     if filtered_media is not None and idx >= 0 and idx < total:
         filename = filtered_media[idx]
         filepath = root_dir + filename
-        filesize = int(os.path.getsize(filepath) / (1024 * 1024))
+        try:
+            filesize_mb = int(os.path.getsize(filepath) / (1024 * 1024))
+        except FileNotFoundError:
+            return("<h1>File not found</h1>")
+        if filesize_mb > 9:
+            filesize = f"{filesize_mb} MB"
+        else:
+            filesize_kb = int(os.path.getsize(filepath) / 1024)
+            filesize = f"{filesize_kb} KB"
         asset = ensure_media_in_db(filepath)
         referrer = request.args.get('current')
         set_carried_tags(asset, referrer)
@@ -258,6 +294,7 @@ def load_favorites():
 
 @app.route('/send_media')
 def send_media():
+  root_dir = get_root_dir()
   try:
     idx = request.args.get('idx')
     file_path = root_dir + session['filtered_media'][int(idx)]
@@ -384,6 +421,24 @@ def handle_add_tag():
     refresh_one_tag_group(tag_group_id)
 
     return redirect(url_for('show_media', idx=idx))
+
+@app.route('/delete')
+def handle_delete():
+    root_dir = get_root_dir()
+    idx = int(request.args.get('idx'))
+    db_id = int(request.args.get('db_id'))
+    asset = db.session.get(Asset, db_id)
+    full_path = asset.path
+    head, name = os.path.split(full_path)
+    head, dir = os.path.split(head)
+    # keep the last two levels (name count as one) but flatten it
+    new_path = os.path.join(trash_dir, dir + '_' + name)
+    print("Moving", full_path, new_path)
+    shutil.move(full_path, new_path)
+    db.session.delete(asset)
+    db.session.commit()
+    # Let show_media takes care of bounds check
+    return redirect(url_for('show_media', idx=idx+1))
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
