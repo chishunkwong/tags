@@ -23,6 +23,8 @@ load_dotenv()
 app = Flask(__name__)
 if os.getenv("ENV") == 'Dev':
     app.config.from_object('config.DevelopmentConfig')
+app.config["SESSION_PERMANENT"] = False # Session expires when browser closes
+app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 db = SQLAlchemy(app, model_class=Base)
 migrate = Migrate(app, db)
@@ -34,7 +36,7 @@ extension = os.getenv("EXT")
 
 category = os.getenv("CATEGORY")
 
-socketio = SocketIO(app)
+socketio = SocketIO(app, manage_session=False)
 
 @app.route('/')
 def index():
@@ -42,6 +44,7 @@ def index():
 
 @app.route('/list_media')
 def list_media():
+    session.pop('carries', None)
     if 'tag_groups' in session:
         tag_groups = session['tag_groups']
     else:
@@ -111,12 +114,14 @@ def refresh_all():
     session.pop('tag_groups', None)
     session.pop('assets', None)
     session.pop('query', None)
+    session.pop('carries', None)
     return redirect(url_for('list_media'))
 
 @app.route('/refresh_tags', methods=['GET', 'POST'])
 def refresh_tags():
     session.pop('tag_groups', None)
     session.pop('query', None)
+    session.pop('carries', None)
     return redirect(url_for('list_media'))
 
 def refresh_one_tag_group(id):
@@ -143,7 +148,6 @@ def handle_search():
     bool_filters = {}
     tag_filters = []
     for key, value in query.items():
-        print(key, '=', value)
         #TODO: use constants
         if key.startswith("bool_"):
             bool_filters[key[len("bool_"):]] = True
@@ -159,6 +163,7 @@ def handle_search():
 @app.route('/show_media')
 def show_media():
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
+    carries = session['carries'] if 'carries' in session else set()
     filtered_media = session['filtered_media'] if 'filtered_media' in session else None
     total = len(filtered_media) if filtered_media is not None else 1
     idx_str = request.args.get('idx')
@@ -168,6 +173,8 @@ def show_media():
         filepath = root_dir + filename
         filesize = int(os.path.getsize(filepath) / (1024 * 1024))
         asset = ensure_media_in_db(filepath)
+        referrer = request.args.get('current')
+        set_carried_tags(asset, referrer)
         checked_tag_ids = get_checked_tag_ids(asset)
         return render_template('media.html',
                                filename=filename,
@@ -179,6 +186,7 @@ def show_media():
                                bookmark=asset.bookmark,
                                should_delete=asset.should_delete,
                                tag_groups=tag_groups,
+                               carries=carries,
                                tag_ids={tag.id for tag in asset.tags},
                                checked_tag_ids = checked_tag_ids,
                                idx=idx,
@@ -194,6 +202,24 @@ def ensure_media_in_db(path):
         db.session.commit()
         asset = db.session.scalars(db.select(Asset).filter_by(path=path)).one_or_none()
     return asset
+
+def set_carried_tags(asset, referrer_id):
+    # we don't carry over any tags if the current asset is already tagged
+    # (even if the tags and the carries do not contradict)
+    if not referrer_id or asset.tags:
+        return
+    if 'carries' not in session:
+        return
+    carries = session['carries']
+    referrer = db.session.get(Asset, referrer_id)
+    added = False
+    for tag in referrer.tags:
+        if tag.tag_group_id in carries:
+            added = True
+            asset.tags.append(tag)
+    if added:
+        db.session.add(asset)
+        db.session.commit()
 
 def get_checked_tag_ids(asset):
     seen_groups = set()
@@ -258,7 +284,23 @@ def handle_message(data):
 
 @socketio.on('set_tag_group_carry')
 def handle_set_tag_group_carry(data):
-    print("Heard", data)
+    existed = False
+    if 'carries' in session:
+        carries = session['carries']
+        existed = True
+    else:
+        carries = set()
+        session['carries'] = carries
+    tag_group_id = data['tag_group_id']
+    if data['value']:
+        carries.add(int(tag_group_id))
+    else:
+        carries.remove(int(tag_group_id))
+    if existed:
+        #TODO: for some reason directly altering an object in session from socketio code
+        # won't persist that change, has to pop and re-add
+        session.pop('carries', None)
+        session['carries'] = carries
 
 @socketio.on('set_asset_boolean')
 def handle_set_asset_boolean(data):

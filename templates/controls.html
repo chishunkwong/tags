@@ -29,6 +29,7 @@
             <div class="carry-checkbox">
               <label for="tg_carry_{{ tg.id}}">Carry</label>
               <input type="checkbox" name="tg_carry_{{ tg.id }}" id="tg_carry_{{ tg.id }}"
+               {% if tg.id in carries %}checked{% endif %}
                onclick="handleTagGroupCarry(this, {{ tg.id }})" />
             </div>
             {% endif %}
