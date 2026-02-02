@@ -48,6 +48,14 @@ function handleTagSelected(selected, tagId, tagGroupId) {
   });
 }
 
+function handleTagGroupCarry(checkbox, tagGroupId) {
+  if (isSearchMode) return;
+  socket.emit('set_tag_group_carry', {
+    value: checkbox.checked,
+    tag_group_id: tagGroupId,
+  });
+}
+
 function makeSelectedVisible(checkboxElement) {
   if (checkboxElement && checkboxElement.checked) {
     checkboxElement.scrollIntoView({

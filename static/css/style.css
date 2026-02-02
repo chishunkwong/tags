@@ -1,3 +1,8 @@
+:root {
+  /* --bg-color: rgb(96 139 168 / 0.2); */
+  --bg-color: rgb(200, 230, 255);
+}
+
 body {
   /* font-family: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif; */
   /* font-family: 'Segoe Print', 'Bradley Hand', Chilanka, TSCu_Comic, casual, cursive; */
@@ -9,7 +14,7 @@ body {
 .box > * {
   border: 2px solid rgb(96 139 168);
   border-radius: 5px;
-  background-color: rgb(96 139 168 / 0.2);
+  background-color: var(--bg-color);
 }
 
 .box {
@@ -59,8 +64,51 @@ input[type="checkbox"], .inline-label {
 }
 
 .tag-group {
+  margin-left: 4px;
+  margin-top: 10px;
   padding: 5px 5px;
   width: 250px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.tag-group-legend {
+  margin-left: 10px;
+  position: relative;
+  top: -14px;
+  bottom: 0px;
+  height: 8px;
+}
+
+.tag-group-legend h3 {
+  font-size: 14px;
+  margin: 0px 0px;
+  text-align: left;
+}
+
+.tag-group-legend span {
+  display: inline;
+  background-color: var(--bg-color);
+  padding: 2px 2px;
+}
+
+.carry-checkbox {
+  margin-left: 10px;
+  height: 10px;
+  position: relative;
+  top: -2px;
+}
+
+.carry-checkbox label {
+  font-size: 10px;
+  padding: 2px 2px;
+  height: 10px;
+  background-color: var(--bg-color);
+}
+
+.carry-checkbox input {
+  height: 10px;
+  margin-left: 0px;
 }
 
 .add-tag {

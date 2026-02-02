@@ -256,6 +256,10 @@ def handle_connect():
 def handle_message(data):
     socketio.emit('response', 'Server received your message: ' + data)
 
+@socketio.on('set_tag_group_carry')
+def handle_set_tag_group_carry(data):
+    print("Heard", data)
+
 @socketio.on('set_asset_boolean')
 def handle_set_asset_boolean(data):
     db_id = data['db_id']
