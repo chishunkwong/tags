@@ -30,12 +30,15 @@ db = SQLAlchemy(app, model_class=Base)
 migrate = Migrate(app, db)
 
 base_root_dir = os.getenv("ROOT_DIR")
+if base_root_dir[-1] != '/':
+    base_root_dir = base_root_dir + '/'
+
 trash_dir = os.getenv("TRASH_DIR")
 if trash_dir[-1] != '/':
     trash_dir = trash_dir + '/'
-extension = os.getenv("EXT")
 
-category = os.getenv("CATEGORY")
+base_extensions = os.getenv("EXTENSIONS")
+base_category = os.getenv("CATEGORY")
 
 socketio = SocketIO(app, manage_session=False)
 
@@ -46,24 +49,41 @@ def index():
 def get_and_set_root_dir():
     root_dir = request.args.get('root_dir')
     if root_dir:
+        if root_dir[-1] != '/':
+            root_dir = root_dir + '/'
         session.pop('all_available_media', None)
         session.pop('filtered_media', None)
         session.pop('assets', None)
-        session['user_specified_root_dir'] = True
-    elif 'root_dir' in session:
-        root_dir = session['root_dir']
+        session['user_specified_root_dir'] = root_dir
+        extensions = request.args.get('extensions')
+        if extensions:
+            session['user_specified_extensions'] = extensions
+        category = request.args.get('category')
+        if category:
+            session['user_specified_category'] = category
+    elif 'user_specified_root_dir' in session:
+        root_dir = session['user_specified_root_dir']
     else:
         root_dir = base_root_dir
-    if root_dir[-1] != '/':
-        root_dir = root_dir + '/'
-    session['root_dir'] = root_dir
     return root_dir
 
 def get_root_dir():
-    return session['root_dir'] if 'root_dir' in session else base_root_dir
+    return session['user_specified_root_dir'] if 'user_specified_root_dir' in session \
+        else base_root_dir
+
+def get_extensions():
+    extensions_str = session['user_specified_extensions'] if \
+        'user_specified_extensions' in session else base_extensions
+    return extensions_str.split(',')
+
+def get_category():
+    return session['user_specified_category'] if \
+        'user_specified_category' in session else base_category
 
 @app.route('/list_media')
 def list_media():
+    # must do this first because it sets the session to be aware of
+    # whether root_dir is set at the request level
     root_dir = get_and_set_root_dir()
     session.pop('carries', None)
     if 'tag_groups' in session:
@@ -110,10 +130,12 @@ def scan_all_available_media():
         root_len = len(root_dir)
         media_arr = []
         root_path = Path(root_dir)
-        for path in root_path.rglob('*.' + extension, case_sensitive=False):
-            if not Path(path).is_symlink():
-                rel_path = str(path)[root_len:]
-                media_arr.append(rel_path)
+        extensions = get_extensions()
+        for extension in extensions:
+            for path in root_path.rglob('*.' + extension, case_sensitive=False):
+                if not Path(path).is_symlink():
+                    rel_path = str(path)[root_len:]
+                    media_arr.append(rel_path)
         media_arr.sort()
         session['all_available_media'] = media_arr
 
@@ -138,10 +160,7 @@ def refresh_all():
     session.pop('assets', None)
     session.pop('query', None)
     session.pop('carries', None)
-    if 'user_specified_root_dir' in session:
-        return redirect(url_for('list_media', root_dir=session['root_dir']))
-    else:
-        return redirect(url_for('list_media'))
+    return redirect(url_for('list_media'))
 
 @app.route('/refresh_tags', methods=['GET', 'POST'])
 def refresh_tags():
@@ -215,7 +234,6 @@ def show_media():
         return render_template('media.html',
                                filename=filename,
                                filesize=filesize,
-                               media_type=extension,
                                db_id=asset.id,
                                search_mode=False,
                                favorite=asset.favorite,
@@ -268,7 +286,7 @@ def get_checked_tag_ids(asset):
 
 def load_tag_groups():
     category_tag_groups = db.session.execute(db.select(CategoryTagGroup)
-                                    .filter_by(name=category)
+                                    .filter_by(name=get_category())
                                     .order_by(CategoryTagGroup.display_order)
                                     ).scalars().all()
     return [load_one_tag_group(ctg.tag_group_id) for ctg in category_tag_groups]
@@ -424,7 +442,6 @@ def handle_add_tag():
 
 @app.route('/delete')
 def handle_delete():
-    root_dir = get_root_dir()
     idx = int(request.args.get('idx'))
     db_id = int(request.args.get('db_id'))
     asset = db.session.get(Asset, db_id)

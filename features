@@ -1,3 +1,4 @@
+Take category, extension as req params when root_dir is specified
 Support mov and mp4 at the same time (simiarly heic and jpg), actually more like support multiple extensions at the same time, even if they are different types of media, but what to do with tag groups?
 Not tagged button
 Navigation panel stays at the bottom

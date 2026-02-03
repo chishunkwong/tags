@@ -44,14 +44,14 @@
     <div class="box">
         <div class="view">
             <h3 class="title">{{ filename }} ({{ filesize }})</h3>
-            {% if media_type == 'mp4' or media_type == 'mov' %}
+            {% if (filename | lower).endswith('.mp4') or (filename | lower).endswith('mpeg') or (filename | lower).endswith('.mov') %}
             <video width="854" height="480" controls autoplay> 
                 <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
             </video>
-            {% elif media_type == 'mp3' or media_type == 'ogg' %}
+            {% elif (filename | lower).endswith('.mp3') or (filename | lower).endswith('.ogg') %}
             <audio controls autoplay src="{{ url_for('send_media', idx=idx) }}"></audio>
-            {% elif media_type == 'jpg' %}
-            <img width="854" src="{{ url_for('send_media', idx=idx) }}" /> 
+            {% elif (filename | lower).endswith('.jpg') or (filename | lower).endswith('.jpeg') or (filename | lower).endswith('.heic') %}
+            <img src="{{ url_for('send_media', idx=idx) }}" />
             {% endif %}
             <br/>
             <a href="{{ url_for('show_media', idx=idx-1) }}"
