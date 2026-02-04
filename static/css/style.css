@@ -54,7 +54,7 @@ input[type="checkbox"], .inline-label {
   height: 720px;
 }
 
-.view img {
+.media-view img {
   width: auto; /* Ensures the image doesn't exceed its container's width or its original width */
   height: auto; /* Ensures the image doesn't exceed its container's width or its original width */
   max-height: 100%;    /* Automatically adjusts height to maintain aspect ratio */

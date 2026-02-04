@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+from datetime import timedelta
 from pathlib import Path
 from random import randint
 from flask import Flask, send_file, render_template, request, session, redirect, url_for
@@ -24,6 +25,7 @@ app = Flask(__name__)
 if os.getenv("ENV") == 'Dev':
     app.config.from_object('config.DevelopmentConfig')
 app.config["SESSION_PERMANENT"] = False # Session expires when browser closes
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 db = SQLAlchemy(app, model_class=Base)
