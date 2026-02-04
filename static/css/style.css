@@ -27,12 +27,31 @@ input[type="checkbox"], .inline-label {
     vertical-align: middle; /* Aligns them vertically */
 }
 
-.view {
-  margin-right: 5px;
+.navigation {
+  margin-right: 0px;
   padding: 5px;
   width: 860px;
-  height: 770px;
+  height: 50px;
+}
+
+.list-header {
+  height: 30px;
+  padding-left: 20px;
+}
+
+.view {
+  margin-right: 0px;
+  padding: 5px;
+  width: 860px;
   overflow: auto;
+}
+
+.list-view {
+  height: 680px;
+}
+
+.media-view {
+  height: 720px;
 }
 
 .view img {
@@ -58,7 +77,7 @@ input[type="checkbox"], .inline-label {
 
 .controls {
   width: 565px;
-  height: 780px;
+  height: 790px;
   column-width: 250px;
   column-fill: auto;
   column-gap: 8px;
@@ -73,6 +92,7 @@ input[type="checkbox"], .inline-label {
 }
 
 .tag-group {
+  display: inline-block;
   margin-left: 4px;
   margin-top: 10px;
   padding: 5px 5px;

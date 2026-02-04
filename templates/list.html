@@ -12,9 +12,11 @@
 </head>
 <body>
     <div class="box">
-        <div class="view">
-            <h3 class="title">Media List:</h3>
-            <h4>{{ total }} files</h4>
+        <div>
+          <div class="list-header">
+            <h4 class="title">Media list in {{ root_dir }}.{{ extensions }} ({{ total }} files)</h4>
+          </div>
+          <div class="view list-view">
             <ul>
                 {% for idx in range(0, total) %} 
                 <li>
@@ -27,6 +29,8 @@
                 </li>
                 {% endfor %}
             </ul>
+          </div>
+          <div class="navigation">
             <div class="side-by-side">
               <form action="{{ url_for('refresh_all') }}" method="POST">
                 <input type="submit" value="Refresh">
@@ -36,6 +40,7 @@
                 <input type="submit" value="Refresh tags">
               </form>
             </div>
+          </div>
         </div>
         {% include './controls.html' %}
     </div>

@@ -26,9 +26,11 @@
         });
     </script>
     <script src="{{ url_for('static', filename='helper.js') }}"></script>
-    <script>
-      window.delete_url = "{{ url_for('handle_delete', idx=idx, db_id=db_id) | safe }}";
-    </script>
+    {% if file_found %}
+      <script>
+        window.delete_url = "{{ url_for('handle_delete', idx=idx, db_id=db_id) | safe }}";
+      </script>
+    {% endif %}
     {% if idx > 0 %}
     <script>
       window.previous_media = "{{ url_for('show_media', idx=idx-1) | safe}}";
@@ -42,18 +44,24 @@
 </head>
 <body>
     <div class="box">
-        <div class="view">
-            <h3 class="title">{{ filename }} ({{ filesize }})</h3>
-            {% if (filename | lower).endswith('.mp4') or (filename | lower).endswith('mpeg') or (filename | lower).endswith('.mov') %}
-            <video width="854" height="480" controls autoplay> 
-                <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
-            </video>
-            {% elif (filename | lower).endswith('.mp3') or (filename | lower).endswith('.ogg') %}
-            <audio controls autoplay src="{{ url_for('send_media', idx=idx) }}"></audio>
-            {% elif (filename | lower).endswith('.jpg') or (filename | lower).endswith('.jpeg') or (filename | lower).endswith('.heic') %}
-            <img src="{{ url_for('send_media', idx=idx) }}" />
+        <div>
+          <div class="view media-view">
+            {% if file_found %}
+              <h3 class="title">{{ filename }} ({{ filesize }})</h3>
+              {% if (filename | lower).endswith('.mp4') or (filename | lower).endswith('mpeg') or (filename | lower).endswith('.mov') %}
+              <video width="854" height="480" controls autoplay> 
+                  <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
+              </video>
+              {% elif (filename | lower).endswith('.mp3') or (filename | lower).endswith('.ogg') %}
+              <audio controls autoplay src="{{ url_for('send_media', idx=idx) }}"></audio>
+              {% elif (filename | lower).endswith('.jpg') or (filename | lower).endswith('.jpeg') or (filename | lower).endswith('.heic') %}
+              <img src="{{ url_for('send_media', idx=idx) }}" />
+              {% endif %}
+            {% else %}
+              <h3 class="title">{{ filename }} not found</h3>
             {% endif %}
-            <br/>
+          </div>
+          <div class="navigation">
             <a href="{{ url_for('show_media', idx=idx-1) }}"
             {% if idx == 0 %} class="disabled-link" {% endif %}
             >Prev</a>
@@ -61,8 +69,9 @@
             {% if idx + 1 == total %} class="disabled-link" {% endif %}
             >Next</a>
             &nbsp;&nbsp;<a href="{{ url_for('show_media', idx='random') }}">Random</a>
-            <p/>
+            <br/>
             <a href="{{ url_for('list_media') }}#{{ idx }}">Back to list</a>
+          </div>
         </div>
         {% include './controls.html' %}
     </div>

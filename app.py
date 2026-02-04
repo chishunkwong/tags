@@ -33,9 +33,7 @@ base_root_dir = os.getenv("ROOT_DIR")
 if base_root_dir[-1] != '/':
     base_root_dir = base_root_dir + '/'
 
-trash_dir = os.getenv("TRASH_DIR")
-if trash_dir[-1] != '/':
-    trash_dir = trash_dir + '/'
+base_trash_dir = os.getenv("TRASH_DIR")
 
 base_extensions = os.getenv("EXTENSIONS")
 base_category = os.getenv("CATEGORY")
@@ -109,6 +107,8 @@ def list_media():
             tag_ids.append(int(key[len("tag_"):]))
     return render_template('list.html',
                            media=media,
+                           root_dir=root_dir,
+                           extensions=get_extensions(),
                            search_mode=True,
                            checked_tag_ids = "TODO",
                            favorite=("bool_" + "favorite") in query,
@@ -218,30 +218,45 @@ def show_media():
     if filtered_media is not None and idx >= 0 and idx < total:
         filename = filtered_media[idx]
         filepath = root_dir + filename
+        file_found = False
         try:
             filesize_mb = int(os.path.getsize(filepath) / (1024 * 1024))
+            file_found = True
+            if filesize_mb > 9:
+                filesize = f"{filesize_mb} MB"
+            else:
+                filesize_kb = int(os.path.getsize(filepath) / 1024)
+                filesize = f"{filesize_kb} KB"
+            asset = ensure_media_in_db(filepath)
+            referrer = request.args.get('current')
+            set_carried_tags(asset, referrer)
+            # HERE HERE
+            db_id = asset.id
+            favorite = asset.favorite
+            bookmark = asset.bookmark
+            should_delete = asset.should_delete
+            tag_ids = {tag.id for tag in asset.tags}
+            checked_tag_ids = get_checked_tag_ids(asset)
         except FileNotFoundError:
-            return("<h1>File not found</h1>")
-        if filesize_mb > 9:
-            filesize = f"{filesize_mb} MB"
-        else:
-            filesize_kb = int(os.path.getsize(filepath) / 1024)
-            filesize = f"{filesize_kb} KB"
-        asset = ensure_media_in_db(filepath)
-        referrer = request.args.get('current')
-        set_carried_tags(asset, referrer)
-        checked_tag_ids = get_checked_tag_ids(asset)
+            filesize = 0 #dummy
+            db_id = ""
+            favorite = False
+            bookmark = False
+            should_delete = False
+            tag_ids = {}
+            checked_tag_ids = ""
         return render_template('media.html',
+                               file_found=file_found,
                                filename=filename,
                                filesize=filesize,
-                               db_id=asset.id,
                                search_mode=False,
-                               favorite=asset.favorite,
-                               bookmark=asset.bookmark,
-                               should_delete=asset.should_delete,
                                tag_groups=tag_groups,
                                carries=carries,
-                               tag_ids={tag.id for tag in asset.tags},
+                               db_id=db_id,
+                               favorite=favorite,
+                               bookmark=bookmark,
+                               should_delete=should_delete,
+                               tag_ids=tag_ids,
                                checked_tag_ids = checked_tag_ids,
                                idx=idx,
                                total=total)
@@ -260,7 +275,7 @@ def ensure_media_in_db(path):
 def set_carried_tags(asset, referrer_id):
     # we don't carry over any tags if the current asset is already tagged
     # (even if the tags and the carries do not contradict)
-    if not referrer_id or asset.tags:
+    if not referrer_id or referrer_id == "" or int(referrer_id) < 0 or asset.tags:
         return
     if 'carries' not in session:
         return
@@ -449,13 +464,17 @@ def handle_delete():
     head, name = os.path.split(full_path)
     head, dir = os.path.split(head)
     # keep the last two levels (name count as one) but flatten it
-    new_path = os.path.join(trash_dir, dir + '_' + name)
+    new_path = os.path.join(get_trash_dir(), dir + '_' + name)
     print("Moving", full_path, new_path)
     shutil.move(full_path, new_path)
     db.session.delete(asset)
     db.session.commit()
     # Let show_media takes care of bounds check
     return redirect(url_for('show_media', idx=idx+1))
+
+def get_trash_dir():
+    trash_dir = os.getenv(get_category() + "_TRASH_DIR")
+    return trash_dir if trash_dir else base_trash_dir
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
