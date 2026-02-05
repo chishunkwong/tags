@@ -492,7 +492,7 @@ def handle_delete():
     db.session.delete(asset)
     db.session.commit()
     # Let show_media takes care of bounds check
-    return redirect(url_for('show_media', idx=idx+1, prev_next='next'))
+    return redirect(url_for('show_media', idx=idx+1, next_prev='next'))
 
 def set_deleted(idx, full_path, new_path):
     if 'deleted' in session:
