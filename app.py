@@ -1,6 +1,5 @@
 import os
 import shutil
-import json
 from datetime import timedelta
 from pathlib import Path
 from random import randint
@@ -156,6 +155,7 @@ def filter_by_searched():
 
 @app.route('/refresh_all', methods=['GET', 'POST'])
 def refresh_all():
+    session.pop('deleted', None)
     session.pop('all_available_media', None)
     session.pop('filtered_media', None)
     session.pop('tag_groups', None)
@@ -217,6 +217,9 @@ def show_media():
     total = len(filtered_media) if filtered_media is not None else 1
     idx_str = request.args.get('idx')
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
+    next_prev = request.args.get('next_prev')
+    if next_prev:
+        idx = find_valid_media(idx, next_prev == 'next', filtered_media, root_dir)
     if filtered_media is not None and idx >= 0 and idx < total:
         filename = filtered_media[idx]
         filepath = root_dir + filename
@@ -264,6 +267,22 @@ def show_media():
                                total=total)
     else:
         return("<h1>Exception: Out of bounds</h1>")
+
+def find_valid_media(idx, forward, filtered_media, root_dir):
+    if not filtered_media:
+        return -1;
+    total = len(filtered_media)
+    found = -1
+    while (forward and idx < total) or (not forward and idx >= 0):
+        filename = filtered_media[idx]
+        filepath = root_dir + filename
+        try:
+            os.path.getsize(filepath)
+            found = idx
+            break
+        except FileNotFoundError:
+            idx = idx + 1 if forward else idx - 1
+    return found
 
 def ensure_media_in_db(path):
     asset = db.session.scalars(db.select(Asset).filter_by(path=path)).one_or_none()
@@ -469,10 +488,48 @@ def handle_delete():
     new_path = os.path.join(get_trash_dir(), dir + '_' + name)
     print("Moving", full_path, new_path)
     shutil.move(full_path, new_path)
+    set_deleted(idx, full_path, new_path)
     db.session.delete(asset)
     db.session.commit()
     # Let show_media takes care of bounds check
-    return redirect(url_for('show_media', idx=idx+1))
+    return redirect(url_for('show_media', idx=idx+1, prev_next='next'))
+
+def set_deleted(idx, full_path, new_path):
+    if 'deleted' in session:
+        deleted = session['deleted']
+    else:
+        deleted = []
+        session['deleted'] = deleted
+    deleted.append({
+        'idx': idx,
+        'full_path': full_path,
+        'new_path': new_path,
+    })
+    if len(deleted) >= 10:
+        session['deleted'] = deleted[-5:]
+
+@app.route('/undo_delete')
+def handle_undo_delete():
+    try:
+        idx = int(request.args.get('idx'))
+    except:
+        idx = None
+    deleted = session['deleted'] if 'deleted' in session else []
+    next_idx = None
+    if len(deleted) == 0:
+        next_idx = idx
+    else:
+        last_deleted = deleted.pop()
+        print("last_deleted", last_deleted)
+        new_path = last_deleted['full_path']
+        full_path = last_deleted['new_path']
+        print("Moving back", full_path, new_path)
+        shutil.move(full_path, new_path)
+        next_idx = last_deleted['idx']
+    if next_idx is None:
+        return redirect(url_for('list_media'))
+    else:
+        return redirect(url_for('show_media', idx=next_idx))
 
 def get_trash_dir():
     trash_dir = os.getenv(get_category() + "_TRASH_DIR")

@@ -9,8 +9,11 @@ document.addEventListener('keydown', (event) => {
     else if ((keyValue === 'ArrowRight' || keyValue === 'N' || keyValue === 'n') && window.next_media) {
       window.location = window.next_media;
     }
-    else if (keyValue === 'Delete' || keyValue === 'Backspace') {
+    else if ((keyValue === 'Delete' || keyValue === 'Backspace') && window.delete_url) {
       window.location.href = window.delete_url;
+    }
+    else if ((keyValue === 'U' || keyValue === 'u') && window.undo_delete_url) {
+      window.location.href = window.undo_delete_url;
     }
     else {
       console.log(keyValue, codeValue)

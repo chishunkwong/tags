@@ -29,18 +29,26 @@
     {% if file_found %}
       <script>
         window.delete_url = "{{ url_for('handle_delete', idx=idx, db_id=db_id) | safe }}";
+        window.undo_delete_url = "{{ url_for('handle_undo_delete', idx=idx) | safe }}";
       </script>
     {% endif %}
     {% if idx > 0 %}
     <script>
-      window.previous_media = "{{ url_for('show_media', idx=idx-1) | safe}}";
+      window.previous_media = "{{ url_for('show_media', idx=idx-1, next_prev='prev') | safe}}";
     </script>
     {% endif %}
     {% if idx + 1 < total %}
     <script>
-      window.next_media = "{{ url_for('show_media', idx=idx+1, current=db_id) | safe}}";
+      window.next_media = "{{ url_for('show_media', idx=idx+1, current=db_id, next_prev='next') | safe}}";
     </script>
     {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            console.log('DOM fully loaded and parsed');
+            document.getElementById('nextLink').href = window.next_media;
+            document.getElementById('prevLink').href = window.previous_media;
+        });
+    </script>
 </head>
 <body>
     <div class="box">
@@ -62,10 +70,10 @@
             {% endif %}
           </div>
           <div class="navigation">
-            <a href="{{ url_for('show_media', idx=idx-1) }}"
+            <a id="prevLink"
             {% if idx == 0 %} class="disabled-link" {% endif %}
             >Prev</a>
-            <a href="{{ url_for('show_media', idx=idx+1, current=db_id) }}"
+            <a id="nextLink"
             {% if idx + 1 == total %} class="disabled-link" {% endif %}
             >Next</a>
             &nbsp;&nbsp;<a href="{{ url_for('show_media', idx='random') }}">Random</a>
