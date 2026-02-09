@@ -1,25 +1,52 @@
 <div class="controls">
   {% if search_mode %}<form action="{{ url_for('handle_search') }}" method="POST">{% endif %}
   <div>
-      <label>
-          <input type="checkbox" id="favorite" name="bool_favorite"
-          {% if favorite %} checked {% endif %}
-          onclick="handleSetAssetBoolean(this, 'favorite')">Favorite</input>
-      </label>
-      <br/>
-      <label>
-          <input type="checkbox" id="bookmark" name="bool_bookmark"
-          {% if bookmark %} checked {% endif %}
-          onclick="handleSetAssetBoolean(this, 'bookmark')">Bookmark</input>
-      </label>
-      <br/>
-      <label>
-          <input type="checkbox" id="should_delete" name="bool_should_delete"
-          {% if should_delete %} checked {% endif %}
-          onclick="handleSetAssetBoolean(this, 'should_delete')">Should delete</input>
-      </label>
+      <table>
+        <tr>
+          <td>
+            <label>
+              <input type="checkbox" id="favorite" name="bool_favorite"
+              {% if favorite %} checked {% endif %}
+              onclick="handleSetAssetBoolean(this, 'favorite')">Favorite</input>
+            </label>
+          </td>
+          <td>
+            <label>
+              <input type="checkbox" id="should_delete" name="bool_should_delete"
+              {% if should_delete %} checked {% endif %}
+              onclick="handleSetAssetBoolean(this, 'should_delete')">Should delete</input>
+            </label>
+          </td>
+        </tr>
+        {% if search_mode %}
+        <tr>
+          <td>
+            <label>
+              <input type="checkbox" id="tagged" name="tagged"
+              {% if tagged %} checked {% endif %}
+              >Tagged</input>
+            </label>
+          </td>
+          <td>
+            <label>
+              <input type="checkbox" id="untagged" name="untagged"
+              {% if untagged %} checked {% endif %}
+              >Untagged</input>
+            </label>
+          </td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td>
+            <label>
+              <input type="checkbox" id="bookmark" name="bool_bookmark"
+              {% if bookmark %} checked {% endif %}
+              onclick="handleSetAssetBoolean(this, 'bookmark')">Bookmark</input>
+            </label>
+          </td>
+        </tr>
+      </table>
   </div>
-  <p/>
   <div>
   {% for tg in tag_groups %}
       <div class="tag-group">

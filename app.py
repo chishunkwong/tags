@@ -118,6 +118,8 @@ def list_media():
                            favorite=("bool_" + "favorite") in query,
                            bookmark=("bool_" + "bookmark") in query,
                            should_delete=("bool_" + "should_delete") in query,
+                           tagged="tagged" in query,
+                           untagged="untagged" in query,
                            tag_groups=tag_groups,
                            tag_ids=tag_ids,
                            total=len(filtered_media))
@@ -151,11 +153,18 @@ def filter_by_searched():
         return
     filtered_paths = set()
     assets = session['assets']
+    query = session["query"] if "query" in session else {}
     # TODO: very inefficient if the search result is big
     for asset in assets:
         filtered_paths.add(asset['path'])
-    session['filtered_media'] = \
-        [rel_path for rel_path in all_available_media if (root_dir + rel_path) in filtered_paths]
+    if "untagged" in query:
+        # The special case of untagged query we filter out any media that's in the searched assets,
+        # because those are the ones that have been tagged
+        session['filtered_media'] = \
+            [rel_path for rel_path in all_available_media if ((root_dir + rel_path) not in filtered_paths)]
+    else:
+        session['filtered_media'] = \
+            [rel_path for rel_path in all_available_media if ((root_dir + rel_path) in filtered_paths)]
 
 @app.route('/refresh_all', methods=['GET', 'POST'])
 def refresh_all():
@@ -199,15 +208,28 @@ def handle_search():
     session['query'] = query
     bool_filters = {}
     tag_filters = []
+    tagged = False
+    untagged = False
+    # untagged trumps everything
     for key, value in query.items():
         #TODO: use constants
-        if key.startswith("bool_"):
+        if not untagged and key.startswith("bool_"):
             bool_filters[key[len("bool_"):]] = True
-        if key.startswith("tag_"):
+        if not untagged and key.startswith("tag_"):
             tag_filters.append(int(key[len("tag_"):]))
+        if not untagged and key == 'tagged':
+            tagged = True
+        if key == 'untagged':
+            untagged = True
+            break
     stmt = db.select(Asset).filter_by(**bool_filters).filter(Asset.path.startswith(root_dir))
-    for tag_id in tag_filters:
-        stmt = stmt.where(Asset.tags.any(Tag.id == tag_id))
+    if tagged or untagged:
+        # For untagged, we look for all tagged ones and then when later we filter out the ones that are tagged,
+        # instead of getting the ones that are not tagged, because some medai may not be in the DB at all yet
+        stmt = stmt.where(Asset.tags.any())
+    else:
+        for tag_id in tag_filters:
+            stmt = stmt.where(Asset.tags.any(Tag.id == tag_id))
     assets = db.session.scalars(stmt)
     session['assets'] = [asset.to_dict() for asset in assets]
     return redirect(url_for('list_media'))
@@ -265,6 +287,8 @@ def show_media():
                                favorite=favorite,
                                bookmark=bookmark,
                                should_delete=should_delete,
+                               tagged=False,
+                               untagged=False,
                                tag_ids=tag_ids,
                                checked_tag_ids = checked_tag_ids,
                                idx=idx,
