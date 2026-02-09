@@ -71,8 +71,11 @@ def get_root_dir():
         else base_root_dir
 
 def get_extensions():
-    extensions_str = session['user_specified_extensions'] if \
-        'user_specified_extensions' in session else base_extensions
+    if 'user_specified_extensions' in session:
+        extensions_str = session['user_specified_extensions']
+    else:
+        category_extensions = os.getenv(get_category() + "_EXTENSIONS")
+        extensions_str = category_extensions if category_extensions else base_extensions
     return extensions_str.split(',')
 
 def get_category():
@@ -148,6 +151,7 @@ def filter_by_searched():
         return
     filtered_paths = set()
     assets = session['assets']
+    # TODO: very inefficient if the search result is big
     for asset in assets:
         filtered_paths.add(asset['path'])
     session['filtered_media'] = \

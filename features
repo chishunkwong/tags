@@ -1,4 +1,7 @@
-Undo deletes up to 10
+category define extensions
+Searchable "Add tag" textbox (names really, any fast libraries in the backend?)
+--Index on Asset.path
+--Undo deletes up to 10
 Advanced search
 --Take category, extension as req params when root_dir is specified
 --Support mov and mp4 at the same time (simiarly heic and jpg)
