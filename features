@@ -1,4 +1,3 @@
-Use OrderedDict
 --category define extensions
 Searchable "Add tag" textbox (names really, any fast libraries in the backend?)
 --Index on Asset.path

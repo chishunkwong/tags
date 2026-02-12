@@ -104,24 +104,24 @@ def list_media():
             'favorite': (root_dir + path) in favorites,
         }
     query = session["query"] if "query" in session else {}
-    tag_ids = []
+    tag_ids = set()
     for key in query.keys():
         #TODO: use constant
         if key.startswith("tag_"):
-            tag_ids.append(int(key[len("tag_"):]))
+            tag_ids.add(key[len("tag_"):])
     return render_template('list.html',
                            media=media,
                            root_dir=root_dir,
                            extensions=get_extensions(),
                            search_mode=True,
-                           checked_tag_ids = "TODO",
+                           checked_tag_ids=" ".join(tag_ids),
                            favorite=("bool_" + "favorite") in query,
                            bookmark=("bool_" + "bookmark") in query,
                            should_delete=("bool_" + "should_delete") in query,
                            tagged="tagged" in query,
                            untagged="untagged" in query,
                            tag_groups=tag_groups,
-                           tag_ids=tag_ids,
+                           tag_ids={int(tag_id) for tag_id in tag_ids},
                            total=len(filtered_media))
 
 def get_filtered_media():
