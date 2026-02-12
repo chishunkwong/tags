@@ -47,6 +47,11 @@
             console.log('DOM fully loaded and parsed');
             document.getElementById('nextLink').href = window.next_media;
             document.getElementById('prevLink').href = window.previous_media;
+
+            var video = document.getElementById("videoPlayer");
+            video.addEventListener('loadedmetadata', function() {
+                video.currentTime = 5;
+            });
         });
     </script>
 </head>
@@ -57,7 +62,7 @@
             {% if file_found %}
               <h3 class="title">{{ filename }} ({{ filesize }})</h3>
               {% if (filename | lower).endswith('.mp4') or (filename | lower).endswith('mpeg') or (filename | lower).endswith('.mov') %}
-              <video width="854" height="480" controls autoplay> 
+              <video id="videoPlayer" width="854" height="480" controls autoplay>
                   <source src="{{ url_for('send_media', idx=idx) }}" type="video/mp4" /> 
               </video>
               {% elif (filename | lower).endswith('.mp3') or (filename | lower).endswith('.ogg') %}

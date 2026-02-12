@@ -1,12 +1,12 @@
-category define extensions
+Use OrderedDict
+--category define extensions
 Searchable "Add tag" textbox (names really, any fast libraries in the backend?)
 --Index on Asset.path
 --Undo deletes up to 10
 Advanced search
 --Take category, extension as req params when root_dir is specified
 --Support mov and mp4 at the same time (simiarly heic and jpg)
-Can't support multiple extensions at the same time, because we don't want to deal with different tag groups, but if they use the same tag groups, then the multi-extensions work covers it
-Not tagged button
+--Not tagged button
 --Navigation panel stays at the bottom
 --Uinque constraings (Same named tags can be in two diff groups)
 Scoring based on time lingering on media, tag numbers, tag scores, etc
