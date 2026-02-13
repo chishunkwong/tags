@@ -85,7 +85,7 @@
       {% if tg.ui_addable and not search_mode %}
       <div class="add-tag">
           <form action="{{ url_for('handle_add_tag') }}" method="POST">
-              <input type="text" id="add_tag" name="name" required />
+              <input type="text" id="add_tag" name="name" autocomplete="off" required />
               <input type="hidden" name="db_id" value="{{ db_id }}">
               <input type="hidden" name="idx" value="{{ idx }}">
               <input type="hidden" name="tag_group_id" value="{{ tg.id }}">
