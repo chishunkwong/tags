@@ -83,6 +83,10 @@ input[type="checkbox"], .inline-label {
   column-gap: 8px;
 }
 
+.controls select {
+  width: 200px;
+}
+
 .side-by-side {
   display: flex;
 }

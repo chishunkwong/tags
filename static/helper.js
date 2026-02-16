@@ -37,7 +37,7 @@ function handleTagSingleSelected(selectBox, tagGroupId) {
   var tagId = selectBox.options[selectBox.selectedIndex].value;
   if (isSearchMode) {
     if (parseInt(tagId, 10) > 0) {
-      selectBox.name = "tag_" + tagId;
+      // selectBox.name = "tag_" + tagId;
     }
   } else {
     handleTagSelected(true, tagId, tagGroupId);

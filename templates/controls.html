@@ -63,8 +63,9 @@
           </div>
           <div class="tags-scroll-box tags-scroll-box-{{ tg.show_size }}">
           {% if not tg.multiselect %}
-              <select id="tag_group_{{ tg.id }}" onchange="handleTagSingleSelected(this, {{ tg.id }});">
-                  <option value="-1">{% if search_mode %}All{% else %}Not specified{% endif %}</option>
+              <select id="tag_group_{{ tg.id }}" name="tag_group_{{ tg.id }}"
+               {% if search_mode %}multiple{% endif %} onchange="handleTagSingleSelected(this, {{ tg.id }});">
+                  {% if not search_mode %}<option value="-1">Not specified</option>{% endif %}
                   {% for tag in tg.tags %}
                   <option value="{{ tag.id }}" {% if tag.id in tag_ids %}selected{% endif %} >{{ tag.name }}</option>
                   {% endfor %}

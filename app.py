@@ -107,7 +107,11 @@ def list_media():
     tag_ids = set()
     for key in query.keys():
         #TODO: use constant
-        if key.startswith("tag_"):
+        if key.startswith("tag_group_"):
+            values = query.getlist(key)
+            for v in values:
+                tag_ids.add(v)
+        elif key.startswith("tag_"):
             tag_ids.add(key[len("tag_"):])
     return render_template('list.html',
                            media=media,
@@ -212,13 +216,21 @@ def handle_search():
     untagged = False
     # untagged trumps everything
     for key, value in query.items():
+        #print(key, "=", value)
         #TODO: use constants
-        if not untagged and key.startswith("bool_"):
-            bool_filters[key[len("bool_"):]] = True
-        if not untagged and key.startswith("tag_"):
-            tag_filters.append(int(key[len("tag_"):]))
-        if not untagged and key == 'tagged':
-            tagged = True
+        if not untagged:
+            if key.startswith("bool_"):
+                bool_filters[key[len("bool_"):]] = True
+            elif key.startswith("tag_group_"):
+                tag_group_id = int(key[len("tag_group_"):])
+                values = query.getlist(key)
+                #TODO: Handle OR here
+                for v in values:
+                    tag_filters.append(int(v))
+            elif key.startswith("tag_"):
+                tag_filters.append(int(key[len("tag_"):]))
+            elif key == 'tagged':
+                tagged = True
         if key == 'untagged':
             untagged = True
             break
