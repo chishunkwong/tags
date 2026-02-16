@@ -24,6 +24,7 @@
             console.log('Server says: ' + data);
             document.getElementById(data['attribute']).checked = data['value'];
         });
+        window.list_media = "{{ url_for('list_media') }}#{{ idx }}"
     </script>
     <script src="{{ url_for('static', filename='helper.js') }}"></script>
     {% if file_found %}
@@ -47,6 +48,7 @@
             console.log('DOM fully loaded and parsed');
             document.getElementById('nextLink').href = window.next_media;
             document.getElementById('prevLink').href = window.previous_media;
+            document.getElementById('listLink').href = window.list_media;
 
             var video = document.getElementById("videoPlayer");
             video.addEventListener('loadedmetadata', function() {
@@ -83,7 +85,7 @@
             >Next</a>
             &nbsp;&nbsp;<a href="{{ url_for('show_media', idx='random') }}">Random</a>
             <br/>
-            <a href="{{ url_for('list_media') }}#{{ idx }}">Back to list</a>
+            <a id="listLink">Back to list</a>
           </div>
         </div>
         {% include './controls.html' %}
