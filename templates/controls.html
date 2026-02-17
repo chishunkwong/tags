@@ -52,14 +52,18 @@
       <div class="tag-group">
           <div class="tag-group-legend side-by-side">
             <h3><span> {{ tg.name }} </span></h3>
-            {% if not search_mode %}
             <div class="carry-checkbox">
+              {% if search_mode %}
+              <label for="tg_or_{{ tg.id}}">OR</label>
+              <input type="checkbox" name="tg_or_{{ tg.id }}" id="tg_or_{{ tg.id }}"
+               {% if tg.id in ors %}checked{% endif %} />
+              {% else %}
               <label for="tg_carry_{{ tg.id}}">Carry</label>
               <input type="checkbox" name="tg_carry_{{ tg.id }}" id="tg_carry_{{ tg.id }}"
                {% if tg.id in carries %}checked{% endif %}
                onclick="handleTagGroupCarry(this, {{ tg.id }})" />
-            </div>
-            {% endif %}
+              {% endif %}
+              </div>
           </div>
           <div class="tags-scroll-box tags-scroll-box-{{ tg.show_size }}">
           {% if not tg.multiselect %}
@@ -74,7 +78,7 @@
               {% for tag in tg.tags %}
               {% if tg.tag_per_line %}<div>{% endif %}
               <label for="tag_{{ tag.id }}" class="inline-label">
-                  <input type="checkbox" name="tag_{{ tag.id }}" id="tag_{{ tag.id }}"
+                  <input type="checkbox" name="tg_tag_{{ tg.id }}_{{ tag.id }}" id="tag_{{ tag.id }}"
                       {% if tag.id in tag_ids %}checked{% endif %}
                       onclick="handleTagClicked(this, {{ tag.id }}, {{ tg.id }})" />
                   {{ tag.name }}
