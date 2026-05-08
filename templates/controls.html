@@ -57,6 +57,10 @@
               <label for="tg_or_{{ tg.id}}">OR</label>
               <input type="checkbox" name="tg_or_{{ tg.id }}" id="tg_or_{{ tg.id }}"
                {% if tg.id in ors %}checked{% endif %} />
+                {% if tg.id not in nots %}
+                <label for="tg_not_{{ tg.id}}">Add NOT</label>
+                <input type="checkbox" name="tg_not_{{ tg.id }}" id="tg_not_{{ tg.id }}" />
+                {% endif %}
               {% else %}
               <label for="tg_carry_{{ tg.id}}">Carry</label>
               <input type="checkbox" name="tg_carry_{{ tg.id }}" id="tg_carry_{{ tg.id }}"

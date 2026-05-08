@@ -106,6 +106,7 @@ def list_media():
     query = session["query"] if "query" in session else {}
     tag_ids = set()
     ors = set()
+    nots = set()
     for key in query.keys():
         #TODO: use constant
         if key.startswith("tag_group_"):
@@ -116,6 +117,8 @@ def list_media():
             tag_ids.add(key.split('_')[-1])
         elif key.startswith("tg_or_"):
             ors.add(int(key[len("tg_or_"):]))
+        elif key.startswith("tg_not_"):
+            nots.add(int(key[len("tg_not_"):]))
     return render_template('list.html',
                            media=media,
                            root_dir=root_dir,
@@ -128,6 +131,7 @@ def list_media():
                            tagged="tagged" in query,
                            untagged="untagged" in query,
                            ors=ors,
+                           nots=nots,
                            tag_groups=tag_groups,
                            tag_ids={int(tag_id) for tag_id in tag_ids},
                            total=len(filtered_media))
@@ -220,6 +224,7 @@ def handle_search():
     tagged = False
     untagged = False
     ors = set()
+    nots = set()
     # untagged trumps everything, if tagged is set, we continue to look at the individual tag filters,
     # although it means the tagged designation is pointless
     # First though, we find the OR tag groups, if any
@@ -227,6 +232,8 @@ def handle_search():
         if key.startswith("tg_or_"):
             # tag group IDs are kept as strings when used as keys
             ors.add(key[len("tg_or_"):])
+        elif key.startswith("tg_not_"):
+            nots.add(key[len("tg_not_"):])
     for key, value in query.items():
         #print(key, "=", value)
         #TODO: use constants

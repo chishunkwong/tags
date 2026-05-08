@@ -15,7 +15,7 @@ document.addEventListener('keydown', (event) => {
     else if ((keyValue === 'U' || keyValue === 'u') && window.undo_delete_url) {
       window.location.href = window.undo_delete_url;
     }
-    else if ((keyValue === 'L' || keyValue === 'l') && window.undo_delete_url) {
+    else if (keyValue === 'ArrowUp' || keyValue === 'L' || keyValue === 'l') {
       window.location.href = window.list_media;
     }
     else {
