@@ -7,6 +7,7 @@
     <script type="text/javascript">
         var isSearchMode = "{{ search_mode }}".toLowerCase() === "true";
         var checkedTagIds = "{{ checked_tag_ids }}".split(' ');
+        window.clear_search = "{{ url_for('handle_clear') }}"
     </script>
     <script src="{{ url_for('static', filename='helper.js') }}"></script>
 </head>

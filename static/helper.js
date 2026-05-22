@@ -15,8 +15,11 @@ document.addEventListener('keydown', (event) => {
     else if ((keyValue === 'U' || keyValue === 'u') && window.undo_delete_url) {
       window.location.href = window.undo_delete_url;
     }
-    else if ((keyValue === 'ArrowUp' || keyValue === 'L' || keyValue === 'l') && window.delete_url) {
+    else if ((keyValue === 'ArrowUp' || keyValue === 'L' || keyValue === 'l') && window.list_media) {
       window.location.href = window.list_media;
+    }
+    else if ((keyValue === 'C' || keyValue === 'c') && window.clear_search) {
+      window.location.href = window.clear_search;
     }
     else {
       console.log(keyValue, codeValue)

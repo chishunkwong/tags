@@ -207,6 +207,13 @@ def refresh_one_tag_group(id):
     if found is not None:
         tag_groups[found] = tag_group
 
+@app.route('/clear', methods=["GET"])
+def handle_clear():
+    session.pop('filtered_media', None)
+    session.pop('assets', None)
+    session.pop('query', None)
+    return redirect(url_for('list_media'))
+
 @app.route('/search', methods=["POST"])
 def handle_search():
     root_dir = get_root_dir()
@@ -214,9 +221,7 @@ def handle_search():
     print("Search data:", request.form)
     query = request.form
     if query["action"] == "Clear":
-        session.pop('assets', None)
-        session.pop('query', None)
-        return redirect(url_for('list_media'))
+        return handle_clear()
     session['query'] = query
     bool_filters = {}
     tag_filters = {}
