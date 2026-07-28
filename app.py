@@ -46,7 +46,8 @@ def index():
     return render_template('index.html')
 
 def get_and_set_root_dir():
-    root_dir = request.args.get('root_dir')
+    #root_dir = request.args.get('root_dir')
+    root_dir = None
     if root_dir:
         if root_dir[-1] != '/':
             root_dir = root_dir + '/'
@@ -218,7 +219,7 @@ def handle_clear():
 def handle_search():
     root_dir = get_root_dir()
     session.pop('filtered_media', None)
-    print("Search data:", request.form)
+    #print("Search data:", request.form)
     query = request.form
     if query["action"] == "Clear":
         return handle_clear()
@@ -563,7 +564,6 @@ def handle_delete():
     head, dir = os.path.split(head)
     # keep the last two levels (name count as one) but flatten it
     new_path = os.path.join(get_trash_dir(), dir + '_' + name)
-    print("Moving", full_path, new_path)
     shutil.move(full_path, new_path)
     set_deleted(idx, full_path, new_path)
     db.session.delete(asset)
@@ -597,10 +597,8 @@ def handle_undo_delete():
         next_idx = idx
     else:
         last_deleted = deleted.pop()
-        print("last_deleted", last_deleted)
         new_path = last_deleted['full_path']
         full_path = last_deleted['new_path']
-        print("Moving back", full_path, new_path)
         shutil.move(full_path, new_path)
         next_idx = last_deleted['idx']
     if next_idx is None:

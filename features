@@ -1,3 +1,4 @@
+Remove ability to set ROOT_DIR dynamically
 Clear search leaves the selected item selected
 copy results from search to folder
 Support multiple roots
