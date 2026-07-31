@@ -15,7 +15,11 @@
     <div class="box">
         <div>
           <div class="list-header">
-            <h4 class="title">Media list in {{ root_dir }}.{{ extensions }} ({{ total }} files)</h4>
+            <h4 class="title">Media list in
+              {{ root_dir }}.{{ extensions }}
+              {% if root_dir_1 %}and {{ root_dir_1 }}.{{ extensions }}{% endif %}
+              ({{ total }} files)
+            </h4>
           </div>
           <div class="view list-view">
             <ul>

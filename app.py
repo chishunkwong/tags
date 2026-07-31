@@ -34,6 +34,13 @@ base_root_dir = os.getenv("ROOT_DIR")
 if base_root_dir[-1] != '/':
     base_root_dir = base_root_dir + '/'
 
+# optional second root directory
+base_root_dir_1 = os.getenv("ROOT_DIR_1")
+if not base_root_dir_1:
+    base_root_dir_1 = ""
+if base_root_dir_1 and base_root_dir_1[-1] != '/':
+    base_root_dir_1 = base_root_dir_1 + '/'
+
 base_trash_dir = os.getenv("TRASH_DIR")
 
 base_extensions = os.getenv("EXTENSIONS")
@@ -48,6 +55,7 @@ def index():
 def get_and_set_root_dir():
     #root_dir = request.args.get('root_dir')
     root_dir = None
+    root_dir_1 = None
     if root_dir:
         if root_dir[-1] != '/':
             root_dir = root_dir + '/'
@@ -65,11 +73,13 @@ def get_and_set_root_dir():
         root_dir = session['user_specified_root_dir']
     else:
         root_dir = base_root_dir
-    return root_dir
+        root_dir_1 = base_root_dir_1
+    # above logic is basically disabled, and if we do reenable it
+    # then it will not support an optional second root_dir
+    return root_dir, root_dir_1
 
-def get_root_dir():
-    return session['user_specified_root_dir'] if 'user_specified_root_dir' in session \
-        else base_root_dir
+def get_root_dirs():
+    return base_root_dir, base_root_dir_1
 
 def get_extensions():
     if 'user_specified_extensions' in session:
@@ -87,7 +97,7 @@ def get_category():
 def list_media():
     # must do this first because it sets the session to be aware of
     # whether root_dir is set at the request level
-    root_dir = get_and_set_root_dir()
+    root_dir, root_dir_1 = get_and_set_root_dir()
     session.pop('carries', None)
     if 'tag_groups' in session:
         tag_groups = session['tag_groups']
@@ -101,8 +111,8 @@ def list_media():
     for idx, path in enumerate(filtered_media):
         media[idx] = {
             'path': path,
-            'bookmarked': (root_dir + path) in bookmarks,
-            'favorite': (root_dir + path) in favorites,
+            'bookmarked': (root_dir + path) in bookmarks or (root_dir_1 + path) in bookmarks,
+            'favorite': (root_dir + path) in favorites or (root_dir_1 + path) in favorites,
         }
     query = session["query"] if "query" in session else {}
     tag_ids = set()
@@ -123,6 +133,7 @@ def list_media():
     return render_template('list.html',
                            media=media,
                            root_dir=root_dir,
+                           root_dir_1=root_dir_1,
                            extensions=get_extensions(),
                            search_mode=True,
                            checked_tag_ids=" ".join(tag_ids),
@@ -144,7 +155,7 @@ def get_filtered_media():
     return session['filtered_media']
 
 def scan_all_available_media():
-    root_dir = get_root_dir()
+    root_dir, root_dir_1 = get_root_dirs()
     if 'all_available_media' not in session:
         root_len = len(root_dir)
         media_arr = []
@@ -155,11 +166,20 @@ def scan_all_available_media():
                 if not Path(path).is_symlink():
                     rel_path = str(path)[root_len:]
                     media_arr.append(rel_path)
+        if root_dir_1:
+            root_1_len = len(root_dir_1)
+            root_1_path = Path(root_dir_1)
+            extensions = get_extensions()
+            for extension in extensions:
+                for path in root_1_path.rglob('*.' + extension, case_sensitive=False):
+                    if not Path(path).is_symlink():
+                        rel_path = str(path)[root_1_len:]
+                        media_arr.append(rel_path)
         media_arr.sort()
         session['all_available_media'] = media_arr
 
 def filter_by_searched():
-    root_dir = get_root_dir()
+    root_dir, root_dir_1 = get_root_dirs()
     all_available_media = session['all_available_media']
     if 'assets' not in session:
         session['filtered_media'] = all_available_media
@@ -174,10 +194,12 @@ def filter_by_searched():
         # The special case of untagged query we filter out any media that's in the searched assets,
         # because those are the ones that have been tagged
         session['filtered_media'] = \
-            [rel_path for rel_path in all_available_media if ((root_dir + rel_path) not in filtered_paths)]
+            [rel_path for rel_path in all_available_media \
+                if not (((root_dir + rel_path) in filtered_paths) or ((root_dir_1 + rel_path) in filtered_paths))]
     else:
         session['filtered_media'] = \
-            [rel_path for rel_path in all_available_media if ((root_dir + rel_path) in filtered_paths)]
+            [rel_path for rel_path in all_available_media \
+                if ((root_dir + rel_path) in filtered_paths) or ((root_dir_1 + rel_path) in filtered_paths)]
 
 @app.route('/refresh_all', methods=['GET', 'POST'])
 def refresh_all():
@@ -217,7 +239,7 @@ def handle_clear():
 
 @app.route('/search', methods=["POST"])
 def handle_search():
-    root_dir = get_root_dir()
+    root_dir, root_dir_1 = get_root_dirs()
     session.pop('filtered_media', None)
     #print("Search data:", request.form)
     query = request.form
@@ -267,7 +289,10 @@ def handle_search():
         if key == 'untagged':
             untagged = True
             break
-    stmt = db.select(Asset).filter_by(**bool_filters).filter(Asset.path.startswith(root_dir))
+    starts_with = Asset.path.startswith(root_dir)
+    if root_dir_1:
+        starts_with = db.or_(starts_with, Asset.path.startswith(root_dir_1))
+    stmt = db.select(Asset).filter_by(**bool_filters).filter(starts_with)
     if tagged or untagged:
         # For untagged, we look for all tagged ones and then when later we filter out the ones that are tagged,
         # instead of getting the ones that are not tagged, because some medai may not be in the DB at all yet
@@ -286,7 +311,7 @@ def handle_search():
 
 @app.route('/show_media')
 def show_media():
-    root_dir = get_root_dir()
+    root_dir, root_dir_1 = get_root_dirs()
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
     carries = session['carries'] if 'carries' in session else set()
     filtered_media = session['filtered_media'] if 'filtered_media' in session else None
@@ -295,14 +320,19 @@ def show_media():
     idx = randint(0, total - 1) if idx_str == 'random' else int(idx_str)
     next_prev = request.args.get('next_prev')
     if next_prev:
-        idx = find_valid_media(idx, next_prev == 'next', filtered_media, root_dir)
+        idx = find_valid_media(idx, next_prev == 'next', filtered_media, root_dir, root_dir_1)
     if filtered_media is not None and idx >= 0 and idx < total:
         filename = filtered_media[idx]
         filepath = root_dir + filename
         file_found = False
         try:
-            filesize_mb = int(os.path.getsize(filepath) / (1024 * 1024))
-            file_found = True
+            try:
+                filesize_mb = int(os.path.getsize(filepath) / (1024 * 1024))
+                file_found = True
+            except FileNotFoundError:
+                filepath = root_dir_1 + filename
+                filesize_mb = int(os.path.getsize(filepath) / (1024 * 1024))
+                file_found = True
             if filesize_mb > 9:
                 filesize = f"{filesize_mb} MB"
             else:
@@ -346,7 +376,7 @@ def show_media():
     else:
         return("<h1>Exception: Out of bounds</h1>")
 
-def find_valid_media(idx, forward, filtered_media, root_dir):
+def find_valid_media(idx, forward, filtered_media, root_dir, root_dir_1):
     if not filtered_media:
         return -1;
     total = len(filtered_media)
@@ -355,9 +385,15 @@ def find_valid_media(idx, forward, filtered_media, root_dir):
         filename = filtered_media[idx]
         filepath = root_dir + filename
         try:
-            os.path.getsize(filepath)
-            found = idx
-            break
+            try:
+                os.path.getsize(filepath)
+                found = idx
+                break
+            except FileNotFoundError:
+                filepath = root_dir_1 + filename
+                os.path.getsize(filepath)
+                found = idx
+                break
         except FileNotFoundError:
             idx = idx + 1 if forward else idx - 1
     return found
@@ -426,11 +462,15 @@ def load_favorites():
 
 @app.route('/send_media')
 def send_media():
-  root_dir = get_root_dir()
+  root_dir, root_dir_1 = get_root_dirs()
+  idx = request.args.get('idx')
   try:
-    idx = request.args.get('idx')
-    file_path = root_dir + session['filtered_media'][int(idx)]
-    return send_file(file_path)
+    try:
+        file_path = root_dir + session['filtered_media'][int(idx)]
+        return send_file(file_path)
+    except FileNotFoundError:
+        file_path = root_dir_1 + session['filtered_media'][int(idx)]
+        return send_file(file_path)
   except BaseException as e:
     print (e)
     return("<h1>Exception: Download operation failed</h1>")
