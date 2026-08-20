@@ -1,9 +1,9 @@
-from .base import Base
+from .base import Base, TimestampMixin
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.schema import ForeignKey
 
-class Tag(Base):
+class Tag(TimestampMixin, Base):
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column(primary_key=True)
     tag_group_id: Mapped[int] = mapped_column(ForeignKey("tag_group.id"))
