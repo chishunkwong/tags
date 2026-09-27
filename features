@@ -1,8 +1,9 @@
-Remove ability to set ROOT_DIR dynamically
+substring search on path
+--Remove ability to set ROOT_DIR dynamically
 Clear search leaves the selected item selected
 copy results from search to folder
-Support multiple roots
-Delete the last one causes an error
+--Support multiple roots (two)
+--Delete the last one causes an error
 Tagged timestamp (with tz)
 Advanced search - add NOT for a group. OR between groups
 --category define extensions

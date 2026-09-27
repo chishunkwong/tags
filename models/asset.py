@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 from typing import Optional
 from .base import Base, asset_tag_table
+from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 class Asset(Base):
@@ -9,6 +11,13 @@ class Asset(Base):
     path: Mapped[str] = mapped_column(index=True, unique=True)
     favorite: Mapped[bool] = mapped_column(index=True, nullable=True)
     bookmark: Mapped[bool] = mapped_column(index=True, nullable=True)
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=True
+    )
+
     #Intentionally use two differnt ways for nullable, just to learn
     should_delete: Mapped[Optional[bool]]
     tags = relationship('Tag', order_by='Tag.name', secondary=asset_tag_table, passive_deletes=True)

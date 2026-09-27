@@ -1,6 +1,6 @@
 import os
 import shutil
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from random import randint
 from flask import Flask, send_file, render_template, request, session, redirect, url_for
@@ -422,6 +422,7 @@ def set_carried_tags(asset, referrer_id):
             added = True
             asset.tags.append(tag)
     if added:
+        asset.updated_at = datetime.now(timezone.utc)
         db.session.add(asset)
         db.session.commit()
 
@@ -552,6 +553,7 @@ def handle_set_tag(data):
             asset.tags.remove(tag_to_remove)
         if tag_to_add is not None:
             asset.tags.append(tag_to_add)
+        asset.updated_at = datetime.now(timezone.utc)
         db.session.add(asset)
         db.session.commit()
     except NoResultFound:
@@ -581,6 +583,7 @@ def handle_add_tag():
             if tag_to_remove_first is not None:
                 asset.tags.remove(tag_to_remove_first)
         asset.tags.append(new_tag)
+        asset.updated_at = datetime.now(timezone.utc)
         db.session.add(asset)
         db.session.commit()
     except NoResultFound:
