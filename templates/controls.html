@@ -66,6 +66,10 @@
               <input type="checkbox" name="tg_carry_{{ tg.id }}" id="tg_carry_{{ tg.id }}"
                {% if tg.id in carries %}checked{% endif %}
                onclick="handleTagGroupCarry(this, {{ tg.id }})" />
+              <label for="tg_force_carry_{{ tg.id}}">Force</label>
+              <input type="checkbox" name="tg_force_carry_{{ tg.id }}" id="tg_force_carry_{{ tg.id }}"
+               {% if tg.id in force_carries %}checked{% endif %}
+               onclick="handleTagGroupForceCarry(this, {{ tg.id }})" />
               {% endif %}
               </div>
           </div>

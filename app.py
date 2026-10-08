@@ -103,6 +103,7 @@ def list_media():
     # whether root_dir is set at the request level
     root_dir, root_dir_1 = get_and_set_root_dir()
     session.pop('carries', None)
+    session.pop('force_carries', None)
     if 'tag_groups' in session:
         tag_groups = session['tag_groups']
     else:
@@ -216,6 +217,7 @@ def refresh_all():
     session.pop('assets', None)
     session.pop('query', None)
     session.pop('carries', None)
+    session.pop('force_carries', None)
     return redirect(url_for('list_media'))
 
 @app.route('/refresh_tags', methods=['GET', 'POST'])
@@ -223,6 +225,7 @@ def refresh_tags():
     session.pop('tag_groups', None)
     session.pop('query', None)
     session.pop('carries', None)
+    session.pop('force_carries', None)
     return redirect(url_for('list_media'))
 
 def refresh_one_tag_group(id):
@@ -341,6 +344,7 @@ def show_media():
     root_dir, root_dir_1 = get_root_dirs()
     tag_groups = session['tag_groups'] if 'tag_groups' in session else []
     carries = session['carries'] if 'carries' in session else set()
+    force_carries = session['force_carries'] if 'force_carries' in session else set()
     filtered_media = session['filtered_media'] if 'filtered_media' in session else None
     total = len(filtered_media) if filtered_media is not None else 1
     idx_str = request.args.get('idx')
@@ -390,6 +394,7 @@ def show_media():
                                search_mode=False,
                                tag_groups=tag_groups,
                                carries=carries,
+                               force_carries=force_carries,
                                db_id=db_id,
                                favorite=favorite,
                                bookmark=bookmark,
@@ -437,13 +442,19 @@ def ensure_media_in_db(path):
 def set_carried_tags(asset, referrer_id):
     # we don't carry over any tags if the current asset is already tagged
     # (even if the tags and the carries do not contradict)
-    if not referrer_id or referrer_id == "" or int(referrer_id) < 0 or asset.tags:
+    force_carries = session['force_carries'] if 'force_carries' in session else set()
+    if not referrer_id or referrer_id == "" or int(referrer_id) < 0 or (asset.tags and not force_carries):
         return
     if 'carries' not in session:
         return
     carries = session['carries']
+    if force_carries:
+        # if there's any force carry set, then we ONLY carry the ones that have force carry set to true as well
+        carries = carries.intersection(force_carries)
     referrer = db.session.get(Asset, referrer_id)
     added = False
+    # TODO: Use force carry with caution, if the target asset has already set a tag of a single-select tag group,
+    # then a force carry will add another one (quite fixable but not interested at the moment)
     for tag in referrer.tags:
         if tag.tag_group_id in carries:
             added = True
@@ -521,13 +532,20 @@ def handle_message(data):
 
 @socketio.on('set_tag_group_carry')
 def handle_set_tag_group_carry(data):
+    handle_set_tag_group_carry_thingy('carries', data)
+
+@socketio.on('set_tag_group_force_carry')
+def handle_set_tag_group_force_carry(data):
+    handle_set_tag_group_carry_thingy('force_carries', data)
+
+def handle_set_tag_group_carry_thingy(thingy_label, data):
     existed = False
-    if 'carries' in session:
-        carries = session['carries']
+    if thingy_label in session:
+        carries = session[thingy_label]
         existed = True
     else:
         carries = set()
-        session['carries'] = carries
+        session[thingy_label] = carries
     tag_group_id = data['tag_group_id']
     if data['value']:
         carries.add(int(tag_group_id))
@@ -536,8 +554,8 @@ def handle_set_tag_group_carry(data):
     if existed:
         #TODO: for some reason directly altering an object in session from socketio code
         # won't persist that change, has to pop and re-add
-        session.pop('carries', None)
-        session['carries'] = carries
+        session.pop(thingy_label, None)
+        session[thingy_label] = carries
 
 @socketio.on('set_asset_boolean')
 def handle_set_asset_boolean(data):

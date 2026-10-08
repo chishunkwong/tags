@@ -69,6 +69,14 @@ function handleTagGroupCarry(checkbox, tagGroupId) {
   });
 }
 
+function handleTagGroupForceCarry(checkbox, tagGroupId) {
+  if (isSearchMode) return;
+  socket.emit('set_tag_group_force_carry', {
+    value: checkbox.checked,
+    tag_group_id: tagGroupId,
+  });
+}
+
 function makeSelectedVisible(checkboxElement) {
   if (checkboxElement && checkboxElement.checked) {
     checkboxElement.scrollIntoView({

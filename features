@@ -1,7 +1,8 @@
 Already added tag should just select existing one
-Force carry
+--Force carry
 tag drop down should ignore size > 1`
-copy search results to folder
+Use stringified query as copy subfolder name
+--copy search results to folder
 free form comment on asset that is substring searchable
 substring search on path
 --Remove ability to set ROOT_DIR dynamically
