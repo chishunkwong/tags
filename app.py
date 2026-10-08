@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from random import randint
@@ -30,6 +31,8 @@ Session(app)
 db = SQLAlchemy(app, model_class=Base)
 migrate = Migrate(app, db)
 
+copy_max = int(os.getenv("COPY_MAX", "20"))
+
 base_root_dir = os.getenv("ROOT_DIR")
 if base_root_dir[-1] != '/':
     base_root_dir = base_root_dir + '/'
@@ -41,6 +44,7 @@ if not base_root_dir_1:
 if base_root_dir_1 and base_root_dir_1[-1] != '/':
     base_root_dir_1 = base_root_dir_1 + '/'
 
+copy_dir = os.getenv("COPY_DIR")
 base_trash_dir = os.getenv("TRASH_DIR")
 
 base_extensions = os.getenv("EXTENSIONS")
@@ -146,7 +150,9 @@ def list_media():
                            nots=nots,
                            tag_groups=tag_groups,
                            tag_ids={int(tag_id) for tag_id in tag_ids},
-                           total=len(filtered_media))
+                           total=len(filtered_media),
+                           copy_max=copy_max,
+                           )
 
 def get_filtered_media():
     if 'filtered_media' not in session:
@@ -230,6 +236,25 @@ def refresh_one_tag_group(id):
     if found is not None:
         tag_groups[found] = tag_group
 
+@app.route('/copy', methods=["GET"])
+def handle_copy():
+    now = int(time.time() * 1000)
+    filtered_media = get_filtered_media()
+    this_copy_dir = os.path.join(copy_dir, str(now))
+    Path(this_copy_dir).mkdir(parents=False, exist_ok=True)
+    root_dir, root_dir_1 = get_root_dirs()
+    for rel_path in filtered_media:
+        full_path = os.path.join(root_dir, rel_path)
+        try:
+            os.path.getsize(full_path)
+        except FileNotFoundError:
+            full_path = os.path.join(root_dir_1, rel_path)
+            os.path.getsize(full_path)
+        _, name = os.path.split(full_path)
+        shutil.copy(full_path, this_copy_dir)
+    to_be_used_as_dir = session["query"] if "query" in session else {}
+    return redirect(url_for('list_media'))
+
 @app.route('/clear', methods=["GET"])
 def handle_clear():
     session.pop('filtered_media', None)
@@ -245,6 +270,8 @@ def handle_search():
     query = request.form
     if query["action"] == "Clear":
         return handle_clear()
+    if query["action"] == "Copy":
+        return handle_copy()
     session['query'] = query
     bool_filters = {}
     tag_filters = {}
