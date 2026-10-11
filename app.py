@@ -243,7 +243,8 @@ def refresh_one_tag_group(id):
 def handle_copy():
     now = int(time.time() * 1000)
     filtered_media = get_filtered_media()
-    this_copy_dir = os.path.join(copy_dir, str(now))
+    query = get_query_string()
+    this_copy_dir = os.path.join(copy_dir, str(now) + query)
     Path(this_copy_dir).mkdir(parents=False, exist_ok=True)
     root_dir, root_dir_1 = get_root_dirs()
     for rel_path in filtered_media:
@@ -255,8 +256,11 @@ def handle_copy():
             os.path.getsize(full_path)
         _, name = os.path.split(full_path)
         shutil.copy(full_path, this_copy_dir)
-    to_be_used_as_dir = session["query"] if "query" in session else {}
     return redirect(url_for('list_media'))
+
+def get_query_string():
+    query = session["query"] if "query" in session else {}
+    return ""
 
 @app.route('/clear', methods=["GET"])
 def handle_clear():
@@ -283,6 +287,7 @@ def handle_search():
     untagged = False
     ors = set()
     nots = set()
+    # Extract this so as to support stringified query
     # untagged trumps everything, if tagged is set, we continue to look at the individual tag filters,
     # although it means the tagged designation is pointless
     # First though, we find the OR tag groups, if any
