@@ -15,6 +15,7 @@ from models.tag import Tag
 from models.tag_group import TagGroup
 from models.category_tag_group import CategoryTagGroup
 from models.base import Base
+from sqlalchemy import not_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -330,16 +331,28 @@ def handle_search():
     stmt = db.select(Asset).filter_by(**bool_filters).filter(starts_with)
     if tagged or untagged:
         # For untagged, we look for all tagged ones and then when later we filter out the ones that are tagged,
-        # instead of getting the ones that are not tagged, because some medai may not be in the DB at all yet
+        # instead of getting the ones that are not tagged, because some media may not be in the DB at all yet
         stmt = stmt.where(Asset.tags.any())
     else:
         for key, value in tag_filters.items():
             if key == 'not_or':
+                is_first = True
+                this_stmt = None
                 for tag_id in value:
-                    stmt = stmt.where(Asset.tags.any(Tag.id == tag_id))
+                    if is_first:
+                        this_stmt = Asset.tags.any(Tag.id == tag_id)
+                        is_first = False
+                    else:
+                        this_stmt = this_stmt.where(Asset.tags.any(Tag.id == tag_id))
+                if this_stmt is not None:
+                    stmt = stmt.where(this_stmt)
             else:
                 # note that we don't even care what the tag group id is
-                stmt = stmt.where(Asset.tags.any(Tag.id.in_(value)))
+                print("key", key, ", nots:", nots)
+                if key in nots:
+                    stmt = stmt.where(not_(Asset.tags.any(Tag.id.in_(value))))
+                else:
+                    stmt = stmt.where(Asset.tags.any(Tag.id.in_(value)))
     assets = db.session.scalars(stmt)
     session['assets'] = [asset.to_dict() for asset in assets]
     return redirect(url_for('list_media'))
