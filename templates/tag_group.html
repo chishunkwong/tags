@@ -32,7 +32,7 @@
       {% else %}
         <div class="tags-scroll-box tags-scroll-box-1">
       {% endif %}
-        <select id="tag_group_{{ tg.id }}" name="tag_group_{{ tg.id }}"
+        <select id="tag_{{ not_label }}group_{{ tg.id }}" name="tag_{{ not_label }}group_{{ tg.id }}"
          {% if search_mode %}multiple{% endif %} onchange="handleTagSingleSelected(this, {{ tg.id }});">
             {% if not search_mode %}<option value="-1">Not specified</option>{% endif %}
             {% for tag in tg.tags %}

@@ -122,22 +122,13 @@ def list_media():
         }
     query = session["query"] if "query" in session else {}
     tag_ids = set()
+    not_tag_ids = set()
     ors = set()
+    not_ors = set()
     nots = set()
-    for key in query.keys():
-        #TODO: use constant
-        if key.startswith("tag_group_"):
-            values = query.getlist(key)
-            for v in values:
-                tag_ids.add(v)
-        elif key.startswith("tg_tag_"):
-            tag_ids.add(key.split('_')[-1])
-        elif key.startswith("tg_or_"):
-            ors.add(int(key[len("tg_or_"):]))
-        elif key.startswith("tg_not_"):
-            nots.add(int(key[len("tg_not_"):]))
-        elif key.startswith("tg_add_not_"):
-            nots.add(int(key[len("tg_add_not_"):]))
+    add_nots = set()
+    parse_query(query, tag_ids, not_tag_ids, ors, add_nots, nots, not_ors, {}, {}, {})
+    nots.update(add_nots)
     return render_template('list.html',
                            media=media,
                            root_dir=root_dir,
@@ -150,12 +141,12 @@ def list_media():
                            should_delete=("bool_" + "should_delete") in query,
                            tagged="tagged" in query,
                            untagged="untagged" in query,
-                           ors=ors,
-                           not_ors={}, #TODO
-                           nots=nots,
+                           ors=[int(x) for x in ors],
+                           not_ors=[int(x) for x in not_ors],
+                           nots=[int(x) for x in nots],
                            tag_groups=tag_groups,
                            tag_ids={int(tag_id) for tag_id in tag_ids},
-                           not_tag_ids={}, #TODO
+                           not_tag_ids=not_tag_ids,
                            total=len(filtered_media),
                            copy_max=copy_max,
                            )
@@ -287,9 +278,11 @@ def handle_search():
     session['query'] = query
     bool_filters = {}
     tag_filters = {}
+    not_tag_filters = {}
     ors = set()
     nots = set()
-    tagged, untagged = parse_query(query, ors, nots, tag_filters, bool_filters)
+    not_ors = set()
+    tagged, untagged = parse_query(query, set(), set(), ors, set(), nots, not_ors, tag_filters, not_tag_filters, bool_filters)
     starts_with = Asset.path.startswith(root_dir)
     if root_dir_1:
         starts_with = db.or_(starts_with, Asset.path.startswith(root_dir_1))
@@ -300,7 +293,7 @@ def handle_search():
         stmt = stmt.where(Asset.tags.any())
     else:
         for key, value in tag_filters.items():
-            if key == 'not_or':
+            if key == 'and':
                 is_first = True
                 this_stmt = None
                 for tag_id in value:
@@ -322,8 +315,8 @@ def handle_search():
     session['assets'] = [asset.to_dict() for asset in assets]
     return redirect(url_for('list_media'))
 
-def parse_query(query, ors, nots, tag_filters, bool_filters):
-    tag_filters['not_or'] = []
+def parse_query(query, tag_ids, not_tag_ids, ors, add_nots, nots, not_ors, tag_filters, not_tag_filters, bool_filters):
+    tag_filters['and'] = []
     tagged = False
     untagged = False
     # untagged trumps everything, if tagged is set, we continue to look at the individual tag filters,
@@ -333,36 +326,53 @@ def parse_query(query, ors, nots, tag_filters, bool_filters):
         if key.startswith("tg_or_"):
             # tag group IDs are kept as strings when used as keys
             ors.add(key[len("tg_or_"):])
+        elif key.startswith("tg_not_or_"):
+            not_ors.add(key[len("tg_not_or_"):])
+        # order matters, the one above would have been preempted by the one below
         elif key.startswith("tg_not_"):
             nots.add(key[len("tg_not_"):])
+        elif key.startswith("tg_add_not_"):
+            add_nots.add(key[len("tg_add_not_"):])
     for key, value in query.items():
         print(key, "=", value)
         #TODO: use constants
         if not untagged:
             if key.startswith("bool_"):
                 bool_filters[key[len("bool_"):]] = True
-            elif key.startswith("tag_group_"):
-                tag_group_id = key[len("tag_group_"):]
-                values = query.getlist(key)
-                if tag_group_id in ors:
-                    tag_filters[tag_group_id] = [int(v) for v in values]
-                else:
-                    for v in values:
-                        tag_filters['not_or'].append(int(v))
-            elif key.startswith("tg_tag_"):
-                tag_group_id, tag_id = key[len("tg_tag_"):].split('_')
-                if tag_group_id in ors:
-                    if tag_group_id not in tag_filters:
-                        tag_filters[tag_group_id] = []
-                    tag_filters[tag_group_id].append(int(tag_id))
-                else:
-                    tag_filters['not_or'].append(int(tag_id))
             elif key == 'tagged':
                 tagged = True
+            else:
+                parse_query_add_filters(False, query, key, ors, tag_filters, tag_ids)
+                parse_query_add_filters(True, query, key, not_ors, not_tag_filters, not_tag_ids)
         if key == 'untagged':
             untagged = True
+            # break because once untagged is found to be set, we don't need to filter anything anymore
             break
     return tagged, untagged
+
+def parse_query_add_filters(is_not, query, key, ors, tag_filters, tag_ids):
+    not_label = "not_" if is_not else ""
+    tag_group_label = "tag_" + not_label + "group_"
+    tg_tag_label = "tg_" + not_label + "tag_"
+    if key.startswith(tag_group_label):
+        tag_group_id = key[len(tag_group_label):]
+        values = query.getlist(key)
+        for v in values:
+            tag_ids.add(v)
+        if tag_group_id in ors:
+            tag_filters[tag_group_id] = [int(v) for v in values]
+        else:
+            for v in values:
+                tag_filters['and'].append(int(v))
+    elif key.startswith(tg_tag_label):
+        tag_group_id, tag_id = key[len(tg_tag_label):].split('_')
+        tag_ids.add(tag_id)
+        if tag_group_id in ors:
+            if tag_group_id not in tag_filters:
+                tag_filters[tag_group_id] = []
+            tag_filters[tag_group_id].append(int(tag_id))
+        else:
+            tag_filters['and'].append(int(tag_id))
 
 @app.route('/show_media')
 def show_media():
