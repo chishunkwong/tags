@@ -78,9 +78,8 @@ input[type="checkbox"], .inline-label {
 
 .controls {
   width: 565px;
-  height: 790px;
-  column-width: 250px;
-  column-fill: auto;
+  column-count: 2;
+  columns: 250px;
   column-gap: 8px;
 }
 

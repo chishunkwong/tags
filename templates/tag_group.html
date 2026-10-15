@@ -1,0 +1,67 @@
+{% set not_label = "not_" if is_not else "" %}
+<div class="tag-group">
+    <div class="tag-group-legend side-by-side">
+      <h3><span> {{ tg.name }} </span></h3>
+      <div class="carry-checkbox">
+        {% if search_mode %}
+        <label for="tg_{{ not_label }}or_{{ tg.id}}">OR</label>
+        <input type="checkbox" name="tg_{{ not_label }}or_{{ tg.id }}" id="tg_{{ not_label }}or_{{ tg.id }}"
+         {% if tg.id in ors %}checked{% endif %} />
+          {% if is_not %}
+          <label for="tg_not_{{ tg.id}}">NOT</label>
+          <input type="checkbox" name="tg_not_{{ tg.id }}" id="tg_not_{{ tg.id }}" checked disabled />
+          {% elif tg.id not in nots %}
+          <label for="tg_add_not_{{ tg.id}}">Add NOT</label>
+          <input type="checkbox" name="tg_add_not_{{ tg.id }}" id="tg_add_not_{{ tg.id }}" />
+          {% endif %}
+        {% else %}
+        <label for="tg_carry_{{ tg.id}}">Carry</label>
+        <input type="checkbox" name="tg_carry_{{ tg.id }}" id="tg_carry_{{ tg.id }}"
+         {% if tg.id in carries %}checked{% endif %}
+         onclick="handleTagGroupCarry(this, {{ tg.id }})" />
+        <label for="tg_force_carry_{{ tg.id}}">Force</label>
+        <input type="checkbox" name="tg_force_carry_{{ tg.id }}" id="tg_force_carry_{{ tg.id }}"
+         {% if tg.id in force_carries %}checked{% endif %}
+         onclick="handleTagGroupForceCarry(this, {{ tg.id }})" />
+        {% endif %}
+        </div>
+    </div>
+    {% if not tg.multiselect %}
+      {% if search_mode %}
+        <div class="tags-scroll-box tags-scroll-box-{{ tg.show_size }}">
+      {% else %}
+        <div class="tags-scroll-box tags-scroll-box-1">
+      {% endif %}
+        <select id="tag_group_{{ tg.id }}" name="tag_group_{{ tg.id }}"
+         {% if search_mode %}multiple{% endif %} onchange="handleTagSingleSelected(this, {{ tg.id }});">
+            {% if not search_mode %}<option value="-1">Not specified</option>{% endif %}
+            {% for tag in tg.tags %}
+            <option value="{{ tag.id }}" {% if tag.id in tag_ids %}selected{% endif %} >{{ tag.name }}</option>
+            {% endfor %}
+        </select>
+    {% else %}
+      <div class="tags-scroll-box tags-scroll-box-{{ tg.show_size }}">
+        {% for tag in tg.tags %}
+        {% if tg.tag_per_line %}<div>{% endif %}
+        <label for="{{ not_label }}tag_{{ tag.id }}" class="inline-label">
+            <input type="checkbox" name="tg_{{ not_label }}tag_{{ tg.id }}_{{ tag.id }}" id="{{ not_label }}tag_{{ tag.id }}"
+                {% if tag.id in tag_ids %}checked{% endif %}
+                onclick="handleTagClicked(this, {{ tag.id }}, {{ tg.id }})" />
+            {{ tag.name }}
+        </label>
+        {% if tg.tag_per_line %}</div>{% endif %}
+        {% endfor %}
+    {% endif %}
+      </div>
+  {% if tg.ui_addable and not search_mode %}
+  <div class="add-tag">
+      <form action="{{ url_for('handle_add_tag') }}" method="POST">
+          <input type="text" id="add_tag" name="name" autocomplete="off" required />
+          <input type="hidden" name="db_id" value="{{ db_id }}">
+          <input type="hidden" name="idx" value="{{ idx }}">
+          <input type="hidden" name="tag_group_id" value="{{ tg.id }}">
+          <input type="submit" value="Add {{ tg.name|lower }}">
+      </form>
+  </div>
+  {% endif %}
+</div>
