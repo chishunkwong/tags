@@ -9,7 +9,7 @@
          {% if tg.id in ors %}checked{% endif %} />
           {% if is_not %}
           <label for="tg_not_{{ tg.id}}">NOT</label>
-          <input type="checkbox" name="tg_not_{{ tg.id }}" id="tg_not_{{ tg.id }}" checked disabled />
+          <input type="checkbox" name="tg_not_{{ tg.id }}" id="tg_not_{{ tg.id }}" checked />
           {% elif tg.id not in nots %}
           <label for="tg_add_not_{{ tg.id}}">Add NOT</label>
           <input type="checkbox" name="tg_add_not_{{ tg.id }}" id="tg_add_not_{{ tg.id }}" />

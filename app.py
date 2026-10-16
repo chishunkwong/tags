@@ -146,7 +146,7 @@ def list_media():
                            nots=[int(x) for x in nots],
                            tag_groups=tag_groups,
                            tag_ids={int(tag_id) for tag_id in tag_ids},
-                           not_tag_ids=not_tag_ids,
+                           not_tag_ids={int(tag_id) for tag_id in not_tag_ids},
                            total=len(filtered_media),
                            copy_max=copy_max,
                            )
@@ -280,9 +280,8 @@ def handle_search():
     tag_filters = {}
     not_tag_filters = {}
     ors = set()
-    nots = set()
     not_ors = set()
-    tagged, untagged = parse_query(query, set(), set(), ors, set(), nots, not_ors, tag_filters, not_tag_filters, bool_filters)
+    tagged, untagged = parse_query(query, set(), set(), ors, set(), set(), not_ors, tag_filters, not_tag_filters, bool_filters)
     starts_with = Asset.path.startswith(root_dir)
     if root_dir_1:
         starts_with = db.or_(starts_with, Asset.path.startswith(root_dir_1))
@@ -292,31 +291,38 @@ def handle_search():
         # instead of getting the ones that are not tagged, because some media may not be in the DB at all yet
         stmt = stmt.where(Asset.tags.any())
     else:
-        for key, value in tag_filters.items():
-            if key == 'and':
-                is_first = True
-                this_stmt = None
-                for tag_id in value:
-                    if is_first:
-                        this_stmt = Asset.tags.any(Tag.id == tag_id)
-                        is_first = False
-                    else:
-                        this_stmt = this_stmt.where(Asset.tags.any(Tag.id == tag_id))
-                if this_stmt is not None:
-                    stmt = stmt.where(this_stmt)
-            else:
-                # note that we don't even care what the tag group id is
-                print("key", key, ", nots:", nots)
-                if key in nots:
-                    stmt = stmt.where(not_(Asset.tags.any(Tag.id.in_(value))))
-                else:
-                    stmt = stmt.where(Asset.tags.any(Tag.id.in_(value)))
+        stmt = build_statement(stmt, False, tag_filters)
+        stmt = build_statement(stmt, True, not_tag_filters)
     assets = db.session.scalars(stmt)
     session['assets'] = [asset.to_dict() for asset in assets]
     return redirect(url_for('list_media'))
 
+def build_statement(stmt, is_not, tag_filters):
+    for key, value in tag_filters.items():
+        if key == 'and':
+            is_first = True
+            this_stmt = None
+            for tag_id in value:
+                if is_first:
+                    this_stmt = Asset.tags.any(Tag.id == tag_id)
+                    is_first = False
+                else:
+                    this_stmt = this_stmt.where(Asset.tags.any(Tag.id == tag_id))
+            if this_stmt is not None:
+                if is_not:
+                    stmt = stmt.where(not_(this_stmt))
+                else:
+                    stmt = stmt.where(this_stmt)
+        else:
+            # note that we don't even care what the tag group id (the key) is
+            print("key", key)
+            if is_not:
+                stmt = stmt.where(not_(Asset.tags.any(Tag.id.in_(value))))
+            else:
+                stmt = stmt.where(Asset.tags.any(Tag.id.in_(value)))
+    return stmt
+
 def parse_query(query, tag_ids, not_tag_ids, ors, add_nots, nots, not_ors, tag_filters, not_tag_filters, bool_filters):
-    tag_filters['and'] = []
     tagged = False
     untagged = False
     # untagged trumps everything, if tagged is set, we continue to look at the individual tag filters,
@@ -326,6 +332,10 @@ def parse_query(query, tag_ids, not_tag_ids, ors, add_nots, nots, not_ors, tag_f
         if key.startswith("tg_or_"):
             # tag group IDs are kept as strings when used as keys
             ors.add(key[len("tg_or_"):])
+        elif key.startswith("tg_not_tag_"):
+            # these are the tag group id and tag id for the selected tag to be NOTed
+            # E.g. tg_not_tag_1_56
+            continue
         elif key.startswith("tg_not_or_"):
             not_ors.add(key[len("tg_not_or_"):])
         # order matters, the one above would have been preempted by the one below
@@ -342,20 +352,26 @@ def parse_query(query, tag_ids, not_tag_ids, ors, add_nots, nots, not_ors, tag_f
             elif key == 'tagged':
                 tagged = True
             else:
-                parse_query_add_filters(False, query, key, ors, tag_filters, tag_ids)
-                parse_query_add_filters(True, query, key, not_ors, not_tag_filters, not_tag_ids)
+                parse_query_add_filters(False, query, key, set(), ors, tag_filters, tag_ids)
+                parse_query_add_filters(True, query, key, nots, not_ors, not_tag_filters, not_tag_ids)
         if key == 'untagged':
             untagged = True
             # break because once untagged is found to be set, we don't need to filter anything anymore
             break
     return tagged, untagged
 
-def parse_query_add_filters(is_not, query, key, ors, tag_filters, tag_ids):
+def parse_query_add_filters(is_not, query, key, nots, ors, tag_filters, tag_ids):
+    if 'and' not in tag_filters:
+        tag_filters['and'] = []
     not_label = "not_" if is_not else ""
     tag_group_label = "tag_" + not_label + "group_"
     tg_tag_label = "tg_" + not_label + "tag_"
     if key.startswith(tag_group_label):
         tag_group_id = key[len(tag_group_label):]
+        if is_not and tag_group_id not in nots:
+            # this allows us to ignore any NOT tag selection as long as
+            # the NOT checkbox at the tag group level is turned off
+            return
         values = query.getlist(key)
         for v in values:
             tag_ids.add(v)
@@ -366,6 +382,9 @@ def parse_query_add_filters(is_not, query, key, ors, tag_filters, tag_ids):
                 tag_filters['and'].append(int(v))
     elif key.startswith(tg_tag_label):
         tag_group_id, tag_id = key[len(tg_tag_label):].split('_')
+        if is_not and tag_group_id not in nots:
+            # ditto
+            return
         tag_ids.add(tag_id)
         if tag_group_id in ors:
             if tag_group_id not in tag_filters:
